@@ -258,15 +258,7 @@ export default function Welcome({ outposts }: Props) {
                                                             {searchTerm ? 'Try adjusting your search terms' : 'Start by creating your first outpost'}
                                                         </p>
                                                     </div>
-                                                    {!searchTerm && (
-                                                        <Button 
-                                                            onClick={addNewOutpost} 
-                                                            className="mt-2 gap-2"
-                                                        >
-                                                            <Plus className="h-4 w-4" />
-                                                            <span>Add Outpost</span>
-                                                        </Button>
-                                                    )}
+                                                    
                                                 </div>
                                             </TableCell>
                                         </TableRow>
