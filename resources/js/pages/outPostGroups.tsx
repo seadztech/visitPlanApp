@@ -273,51 +273,9 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                 )}
                                             </div>
                                         </TableHead>
-                                        <TableHead 
-                                            className="cursor-pointer text-xs font-medium hover:bg-muted md:text-sm md:font-semibold" 
-                                            onClick={() => handleSort('village')}
-                                        >
-                                            <div className="flex items-center gap-1.5 md:gap-2">
-                                                <span>Village</span>
-                                                {sortColumn === 'village' && (
-                                                    <span className="text-[10px] md:text-xs">
-                                                        {sortDirection === 'asc' ? '↑' : '↓'}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </TableHead>
-                                        <TableHead 
-                                            className="cursor-pointer text-xs font-medium hover:bg-muted md:text-sm md:font-semibold" 
-                                            onClick={() => handleSort('loan_balance_after')}
-                                        >
-                                            <div className="flex items-center gap-1.5 md:gap-2">
-                                                <span>Loan Balance</span>
-                                                {sortColumn === 'loan_balance_after' && (
-                                                    <span className="text-[10px] md:text-xs">
-                                                        {sortDirection === 'asc' ? '↑' : '↓'}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </TableHead>
-                                        <TableHead 
-                                            className="cursor-pointer text-xs font-medium hover:bg-muted md:text-sm md:font-semibold" 
-                                            onClick={() => handleSort('savings_balance_after')}
-                                        >
-                                            <div className="flex items-center gap-1.5 md:gap-2">
-                                                <span>Savings</span>
-                                                {sortColumn === 'savings_balance_after' && (
-                                                    <span className="text-[10px] md:text-xs">
-                                                        {sortDirection === 'asc' ? '↑' : '↓'}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </TableHead>
-                                        <TableHead className="hidden text-xs font-medium md:table-cell md:text-sm md:font-semibold">
-                                            Meeting
-                                        </TableHead>
-                                        <TableHead className="hidden text-xs font-medium md:table-cell md:text-sm md:font-semibold">
-                                            Credit Officer
-                                        </TableHead>
+                                       
+                                      
+                                    
                                         <TableHead className="text-right text-xs font-medium md:text-sm md:font-semibold">
                                             Actions
                                         </TableHead>
@@ -340,7 +298,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                             </div>
                                                             <div>
                                                                 <div className="font-medium">{group.group_name}</div>
-                                                                <div className="mt-1 flex items-center gap-2">
+                                                                <div className="mt-1 flex items-center gap-1">
                                                                     <Badge variant="outline" className="px-2 py-0.5 text-xs">
                                                                         {group.group_id}
                                                                     </Badge>
@@ -359,47 +317,16 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-xs md:text-sm">
-                                                        {group.village}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs md:text-sm">
-                                                        <div className="space-y-1">
-                                                            <div className="font-medium">{formatCurrency(group.loan_balance_after)}</div>
-                                                            <div className={`text-xs ${loanChange < 0 ? 'text-green-600' : loanChange > 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                                                                {loanChange < 0 ? '↘' : loanChange > 0 ? '↗' : '→'} {formatCurrency(Math.abs(loanChange))}
-                                                            </div>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-xs md:text-sm">
-                                                        <div className="space-y-1">
-                                                            <div className="font-medium">{formatCurrency(group.savings_balance_after)}</div>
-                                                            <div className={`text-xs ${savingsChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                                {savingsChange >= 0 ? '↗' : '↘'} {formatCurrency(Math.abs(savingsChange))}
-                                                            </div>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="hidden text-xs md:table-cell md:text-sm">
-                                                        <div className="space-y-1">
-                                                            <Badge variant="outline" className={`w-fit ${getDayColor(group.meeting_day)}`}>
-                                                                <Calendar className="mr-1 h-3 w-3" />
-                                                                {group.meeting_day}
-                                                            </Badge>
-                                                            <div className="flex items-center text-xs text-muted-foreground">
-                                                                <Clock className="mr-1 h-3 w-3" />
-                                                                {formatTime(group.time)}
-                                                            </div>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="hidden text-xs md:table-cell md:text-sm">
-                                                        <Badge variant="secondary" className="px-2 py-1">
-                                                            {group.credit_officer_id}
-                                                        </Badge>
-                                                    </TableCell>
+                                                    
+                                                   
+                                                   
+                                                    
+                                                   
                                                     <TableCell className="text-right md:py-3">
                                                         <div className="flex justify-end gap-2">
                                                             <Button 
                                                                 asChild 
-                                                                variant="ghost" 
+                                                                variant="default" 
                                                                 size="xs" 
                                                                 className="h-8 gap-1.5 px-2 text-xs hover:bg-primary/10 hover:text-primary md:size-sm md:px-3 md:text-sm"
                                                             >

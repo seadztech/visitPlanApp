@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\Models\Outpost;
 use App\Models\Group;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CreateGroups extends Command
@@ -67,6 +68,21 @@ class CreateGroups extends Command
                 $this->info('✅ Table truncated.');
             }
             
+            // Create a manual mapping between Excel BranchID and Outpost IDs
+            // Based on your data, you need to map Excel branch codes to actual outpost IDs
+            // This is CRITICAL since Excel uses different codes than your database
+            $branchToOutpostMapping = $this->getBranchToOutpostMapping();
+            
+            if ($debug) {
+                $this->info("\n🗺️  Branch to Outpost Mapping:");
+                foreach ($branchToOutpostMapping as $excelBranch => $outpostId) {
+                    $this->info("  Excel Branch '{$excelBranch}' → Outpost ID: {$outpostId}");
+                }
+            }
+            
+            // Get all outposts for reference
+            $outposts = Outpost::all()->keyBy('id');
+            
             // Process data
             $totalRows = count($sheet) - 1;
             $processed = 0;
@@ -77,8 +93,8 @@ class CreateGroups extends Command
             $bar = $this->output->createProgressBar($totalRows);
             $bar->start();
             
-            // Get all outposts to map branch_id to outpost_id
-            $outposts = Outpost::all()->keyBy('branch_code');
+            // Track Excel branch codes for debugging
+            $excelBranches = [];
             
             for ($i = 1; $i < count($sheet); $i++) {
                 $row = $sheet[$i];
@@ -86,28 +102,48 @@ class CreateGroups extends Command
                 
                 try {
                     // Extract values using dynamic column mapping
-                    $branchId = $this->getCellValue($row, $columnIndexes, 'BranchID');
+                    $excelBranchId = $this->getCellValue($row, $columnIndexes, 'BranchID');
                     $groupName = $this->getCellValue($row, $columnIndexes, 'Group Name');
                     
-                    if (empty($branchId) || empty($groupName)) {
+                    if (empty($excelBranchId) || empty($groupName)) {
                         $skipped++;
                         if ($debug && $skipped <= 3) {
                             $this->warn("\n⚠️ Row {$rowNum} skipped - missing BranchID or Group Name");
+                            $this->warn("  BranchID: '{$excelBranchId}', Group Name: '{$groupName}'");
                         }
                         $bar->advance();
                         continue;
                     }
                     
-                    // Clean branch ID
-                    $branchId = $this->cleanBranchCode($branchId);
+                    // Clean the Excel branch ID
+                    $excelBranchId = $this->cleanExcelBranchCode($excelBranchId);
                     
-                    // Find outpost by branch_id
-                    $outpost = $outposts->get($branchId);
+                    // Track unique Excel branch codes
+                    if (!in_array($excelBranchId, $excelBranches)) {
+                        $excelBranches[] = $excelBranchId;
+                    }
+                    
+                    // Use the mapping to get the outpost ID
+                    if (!isset($branchToOutpostMapping[$excelBranchId])) {
+                        $skipped++;
+                        if ($debug && $skipped <= 5) {
+                            $this->warn("\n⚠️ Row {$rowNum} skipped - no mapping found for Excel branch '{$excelBranchId}'");
+                            $this->warn("  Group: '{$groupName}'");
+                            $this->warn("  Available mappings: " . implode(', ', array_keys($branchToOutpostMapping)));
+                        }
+                        $bar->advance();
+                        continue;
+                    }
+                    
+                    $outpostId = $branchToOutpostMapping[$excelBranchId];
+                    
+                    // Get the outpost for additional info
+                    $outpost = $outposts->get($outpostId);
                     
                     if (!$outpost) {
                         $skipped++;
                         if ($debug && $skipped <= 3) {
-                            $this->warn("\n⚠️ Row {$rowNum} skipped - no outpost found for branch '{$branchId}'");
+                            $this->warn("\n⚠️ Row {$rowNum} skipped - outpost ID {$outpostId} not found in database");
                         }
                         $bar->advance();
                         continue;
@@ -115,8 +151,8 @@ class CreateGroups extends Command
                     
                     // Prepare data using dynamic column mapping
                     $groupData = [
-                        'outpost_id' => $outpost->id,
-                        'branch_id' => $branchId,
+                        'outpost_id' => $outpostId,
+                        'branch_id' => $excelBranchId, // Store the Excel branch code
                         'village' => $this->getCellValue($row, $columnIndexes, 'Village'),
                         'credit_officer_id' => $this->getCellValue($row, $columnIndexes, 'Credit Officer ID') ?: 'UNKNOWN',
                         'group_id' => $this->getCellValue($row, $columnIndexes, 'Group ID'),
@@ -140,25 +176,32 @@ class CreateGroups extends Command
                     
                     if ($debug && $processed < 3) {
                         $this->info("\n📊 Row {$rowNum} Data:");
-                        $this->info("  Branch: '{$branchId}' → Outpost ID: {$outpost->id}");
+                        $this->info("  Excel Branch ID: '{$excelBranchId}'");
+                        $this->info("  Mapped to Outpost ID: {$outpostId}");
+                        $this->info("  Outpost Name: '{$outpost->name}'");
+                        $this->info("  Outpost Branch Code: '{$outpost->branch_code}'");
                         $this->info("  Group: '{$groupName}'");
-                        $this->info("  Savings After: " . $groupData['savings_balance_after']);
-                        $this->info("  Loan B4: " . $groupData['loan_balance_b4']);
-                        $this->info("  Loan After: " . $groupData['loan_balance_after']);
-                        $this->info("  Arrears B4: " . $groupData['arrears_b4']);
-                        $this->info("  Arrears After: " . $groupData['arrears_after']);
+                        $this->info("  Stored branch_id in groups table: '{$excelBranchId}'");
                     }
                     
                     if (!$testMode) {
                         try {
                             // Save to database
                             if (!empty($groupData['group_id'])) {
+                                // Use group_id as unique identifier
                                 Group::updateOrCreate(
                                     ['group_id' => $groupData['group_id']],
                                     $groupData
                                 );
+                                $action = 'updated/created';
                             } else {
+                                // Create new group without group_id
                                 Group::create($groupData);
+                                $action = 'created';
+                            }
+                            
+                            if ($debug && $processed < 3) {
+                                $this->info("  ✅ {$action} group in database");
                             }
                             $processed++;
                         } catch (\Exception $e) {
@@ -170,7 +213,7 @@ class CreateGroups extends Command
                     } else {
                         $processed++;
                         if ($debug && $processed <= 3) {
-                            $this->info("✅ TEST - Would save: {$groupName}");
+                            $this->info("  🔍 TEST - Would save: {$groupName} → Outpost: {$outpostId}");
                         }
                     }
                     
@@ -186,8 +229,18 @@ class CreateGroups extends Command
             
             $bar->finish();
             
+            // Show Excel branches found for debugging
+            if ($debug && !empty($excelBranches)) {
+                $this->info("\n\n📋 Excel Branch Codes Found:");
+                sort($excelBranches);
+                foreach ($excelBranches as $branch) {
+                    $mapped = isset($branchToOutpostMapping[$branch]) ? "→ Outpost ID: {$branchToOutpostMapping[$branch]}" : "→ NO MAPPING";
+                    $this->info("  '{$branch}' {$mapped}");
+                }
+            }
+            
             // Show summary
-            $this->showSummary($processed, $skipped, $errors, $testMode);
+            $this->showSummary($processed, $skipped, $errors, $testMode, $debug);
             
         } catch (\Exception $e) {
             $this->error("❌ Import failed: " . $e->getMessage());
@@ -201,6 +254,78 @@ class CreateGroups extends Command
     }
     
     /**
+     * Get mapping between Excel BranchID and Outpost IDs
+     * This is where you define how Excel codes map to your outposts
+     */
+    private function getBranchToOutpostMapping()
+    {
+        // This is the CRITICAL mapping between Excel branch codes and your outpost IDs
+        // You need to update this based on your actual data
+        
+        // Based on your example:
+        // Excel has '000', '001', '002', etc.
+        // Your outposts have different codes like '017' for Kibwezi
+        
+        return [
+            '000' => 1,  // Map Excel '000' to outpost ID 1 (Head Office/Support Center)
+            '001' => 2,  // Map Excel '001' to outpost ID 2 (Embu)
+            '002' => 3,  // Map Excel '002' to outpost ID 3 (Kiritiri)
+            '003' => 4,  // Map Excel '003' to outpost ID 4
+            '004' => 5,  // Map Excel '004' to outpost ID 5
+            '005' => 6,  // Map Excel '005' to outpost ID 6
+            '006' => 7,  // Map Excel '006' to outpost ID 7
+            '007' => 8,  // Map Excel '007' to outpost ID 8
+            '008' => 9,  // Map Excel '008' to outpost ID 9
+            '009' => 10, // Map Excel '009' to outpost ID 10
+            '010' => 11, // Map Excel '010' to outpost ID 11
+            '011' => 12, // Map Excel '011' to outpost ID 12
+            '012' => 13, // Map Excel '012' to outpost ID 13
+            '013' => 14, // Map Excel '013' to outpost ID 14
+            '014' => 15, // Map Excel '014' to outpost ID 15
+            '015' => 16, // Map Excel '015' to outpost ID 16
+            '016' => 17, // Map Excel '016' to outpost ID 17
+            '017' => 32, // Map Excel '017' to outpost ID 32 (Kibwezi - based on your example)
+            '018' => 33, // Map Excel '018' to outpost ID 33
+            '019' => 34, // Map Excel '019' to outpost ID 34
+            // Add more mappings as needed
+        ];
+        
+        // Alternatively, you could query the database to build this mapping
+        // based on branch names or other criteria:
+        /*
+        $mapping = [];
+        $outposts = Outpost::all();
+        
+        foreach ($outposts as $outpost) {
+            // Try to match based on name or other logic
+            // This depends on your specific data
+        }
+        
+        return $mapping;
+        */
+    }
+    
+    /**
+     * Clean Excel branch code
+     */
+    private function cleanExcelBranchCode($code)
+    {
+        if (empty($code)) {
+            return null;
+        }
+        
+        // Convert to string and trim
+        $clean = trim((string)$code);
+        
+        // Pad to 3 digits if it's numeric
+        if (is_numeric($clean)) {
+            return str_pad($clean, 3, '0', STR_PAD_LEFT);
+        }
+        
+        return $clean;
+    }
+    
+    /**
      * Map column names to indexes
      */
     private function mapColumns($headers, $debug = false)
@@ -209,9 +334,9 @@ class CreateGroups extends Command
         
         // Common variations of column names
         $columnPatterns = [
-            'BranchID' => ['branchid', 'branch id', 'branch_id', 'branch code'],
+            'BranchID' => ['branchid', 'branch id', 'branch_id', 'branch code', 'branch', 'branchcode'],
             'Village' => ['village'],
-            'Credit Officer ID' => ['credit officer id', 'credit officer', 'officer id', 'credit_officer_id'],
+            'Credit Officer ID' => ['credit officer id', 'credit officer', 'officer id', 'credit_officer_id', 'co id'],
             'Group ID' => ['group id', 'groupid', 'group_id'],
             'Group Name' => ['group name', 'groupname', 'group_name'],
             'Group Product ID' => ['group product id', 'product id', 'group_product_id'],
@@ -230,7 +355,9 @@ class CreateGroups extends Command
         ];
         
         foreach ($headers as $index => $header) {
-            $header = trim(strtolower($header));
+            if ($header === null) continue;
+            
+            $header = trim(strtolower((string)$header));
             
             foreach ($columnPatterns as $standardName => $patterns) {
                 foreach ($patterns as $pattern) {
@@ -245,18 +372,8 @@ class CreateGroups extends Command
         if ($debug) {
             $this->info("\n🗺️  Column Mapping Results:");
             foreach ($mapping as $columnName => $index) {
-                $this->info("  {$columnName} → Column index {$index}");
-            }
-            
-            $missing = [];
-            foreach (array_keys($columnPatterns) as $required) {
-                if (!isset($mapping[$required])) {
-                    $missing[] = $required;
-                }
-            }
-            
-            if (!empty($missing)) {
-                $this->warn("\n⚠️  Missing columns: " . implode(', ', $missing));
+                $originalHeader = $headers[$index] ?? 'N/A';
+                $this->info("  {$columnName} → Column index {$index} ('{$originalHeader}')");
             }
         }
         
@@ -280,34 +397,11 @@ class CreateGroups extends Command
         
         $value = $row[$index];
         
-        if ($value === null || $value === '') {
+        if ($value === null || $value === '' || $value === 'NULL' || $value === 'null') {
             return null;
         }
         
         return is_string($value) ? trim($value) : $value;
-    }
-    
-    /**
-     * Clean branch code
-     */
-    private function cleanBranchCode($code)
-    {
-        if (empty($code)) {
-            return null;
-        }
-        
-        $clean = trim((string)$code);
-        
-        // Remove any non-digit characters
-        $clean = preg_replace('/[^0-9]/', '', $clean);
-        
-        // If empty after cleaning, return null
-        if (empty($clean)) {
-            return null;
-        }
-        
-        // Pad to 3 digits
-        return str_pad($clean, 3, '0', STR_PAD_LEFT);
     }
     
     /**
@@ -327,8 +421,13 @@ class CreateGroups extends Command
         // Convert to string
         $value = trim((string)$value);
         
-        // Remove commas from thousands
-        $value = str_replace(',', '', $value);
+        // Remove currency symbols, commas, and other non-numeric chars
+        $value = str_replace(['$', '€', '£', ',', ' '], '', $value);
+        
+        // Check for negative numbers in parentheses format: (123.45)
+        if (preg_match('/^\((.*?)\)$/', $value, $matches)) {
+            $value = '-' . $matches[1];
+        }
         
         // Remove any remaining non-numeric characters except dots and minus
         $value = preg_replace('/[^0-9\.\-]/', '', $value);
@@ -366,7 +465,7 @@ class CreateGroups extends Command
         if (is_string($value)) {
             $value = trim($value);
             // Try to parse various time formats
-            $formats = ['H:i:s', 'H:i', 'h:i:s A', 'h:i A'];
+            $formats = ['H:i:s', 'H:i', 'h:i:s A', 'h:i A', 'g:i A', 'g:i:s A'];
             foreach ($formats as $format) {
                 $date = \DateTime::createFromFormat($format, $value);
                 if ($date !== false) {
@@ -381,7 +480,7 @@ class CreateGroups extends Command
     /**
      * Show summary
      */
-    private function showSummary($processed, $skipped, $errors, $testMode)
+    private function showSummary($processed, $skipped, $errors, $testMode, $debug = false)
     {
         $this->newLine(2);
         $this->info(str_repeat("=", 60));
@@ -397,18 +496,17 @@ class CreateGroups extends Command
             $total = Group::count();
             $this->info("📋 Total groups in database: {$total}");
             
-            // Show sample of imported data
+            // Show distribution by outpost
             if ($total > 0) {
-                $this->info("\n📊 Sample of imported data (first 3 records):");
-                $sample = Group::with('outpost')
-                    ->select('group_name', 'branch_id', 'loan_balance_b4', 'loan_balance_after')
-                    ->limit(3)
+                $this->info("\n📍 Distribution by Outpost:");
+                $distribution = Group::select('outpost_id', DB::raw('count(*) as count'))
+                    ->groupBy('outpost_id')
+                    ->with('outpost')
                     ->get();
                 
-                foreach ($sample as $group) {
-                    $this->info("  📍 {$group->group_name} (Branch: {$group->branch_id})");
-                    $this->info("     Loan B4: " . number_format($group->loan_balance_b4, 2));
-                    $this->info("     Loan After: " . number_format($group->loan_balance_after, 2));
+                foreach ($distribution as $dist) {
+                    $outpostName = $dist->outpost ? $dist->outpost->name : 'Unknown';
+                    $this->info("  Outpost #{$dist->outpost_id} ({$outpostName}): {$dist->count} groups");
                 }
             }
         }

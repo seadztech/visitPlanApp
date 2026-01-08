@@ -28,7 +28,7 @@ class IndexController extends Controller
     {
         $groups = Group::with('outpost')->where('outpost_id', $outpostId)->get();
         
-        return Inertia::render('outPostGroups', [
+        return Inertia::render('OutPostGroups', [
             'groups' => $groups,
             'outpostId' => $outpostId
         ]);
@@ -41,7 +41,7 @@ class IndexController extends Controller
         $group = Group::with('outpost')->find($groupId);
         $objectives = Objective::all();
 
-        return Inertia::render('singleGroup', [
+        return Inertia::render('SingleGroup', [
             'group' => $group,
             'objectives' => $objectives
         ]);
