@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from './Layouts/MainLayout';
-import GetFeedback from '@/components/custom/giveFeedback';
-import CompetedFeedback from '@/components/custom/completedFeedback';
+
 import GroupInformation from '@/components/custom/GroupInformation';
+import GetFeedback from '@/components/custom/GiveFeedback';
+import CompetedFeedback from '@/components/custom/CompletedFeedback';
 
 export default function singleGroup() {
     return (
