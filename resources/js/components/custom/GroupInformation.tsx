@@ -19,8 +19,8 @@ export default function GroupInformation({ group = {} }: props) {
   return (
     <Dialog>
 
-      <DialogTrigger asChild className="mt-2">
-        <Button variant="default"> <Users /> Group Information</Button>
+      <DialogTrigger asChild className="mt-2 flex justify-start items-center">
+        <Button size={'sm'} variant="default"> <Users /> Group Information</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

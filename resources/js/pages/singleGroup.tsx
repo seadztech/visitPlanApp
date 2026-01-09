@@ -572,7 +572,8 @@ export default function singleGroup() {
 
     return (
         <MainLayout title="Group data entry point" >
-            <div className='w-[98%] h-[3rem] mx-auto flex items-center justify-end'>
+            <div className='w-[98%] h-[3rem] mx-auto flex justify-s items-end gap-1'>
+                <h4 className='text-xs font-bold flex justify-start items-center h-8 px-2'>{(props.group as any)?.group_name}</h4>
                 <GroupInformation group={props.group} />
 
             </div>
