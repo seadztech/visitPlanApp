@@ -4,24 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Objective;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Objective extends Model
+class DiscussionPoint extends Model
 {
-    //
-
+    
     public function comments(): HasMany {
         return $this->hasMany(Comment::class);
-    }
-
-    public function group():BelongsTo {
-        return $this->belongsTo(Group::class);
-    }
-
-    public function discussionPoints(): HasMany {
-        return $this->hasMany(DiscussionPoint::class);
     } 
 
     
 }
-

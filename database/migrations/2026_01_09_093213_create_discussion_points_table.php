@@ -11,13 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('comments', function (Blueprint $table) {
+        Schema::create('discussion_points', function (Blueprint $table) {
             $table->id();
-            $table->integer('discussion_point_id');
             $table->integer('objective_id');
-            $table->integer('group_id');
-            $table->string('comment');
-            $table->string('issues_raised');
+            $table->text('point');
             $table->timestamps();
         });
     }
@@ -27,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('comments');
+        Schema::dropIfExists('discussion_points');
     }
 };
