@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Delete, Loader, Plus } from 'lucide-react';
-import { convertObjectivesToComments, parseDiscussionPoints } from '@/lib/utils';
+import { convertObjectivesToComments2, parseDiscussionPoints } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 
 
@@ -43,6 +43,11 @@ export type DiscussionPoint = {
     id: string; // as in your example, discussion_point id is a string
     point: string;
 };
+export type DiscussionPointWithComments = {
+    id: string; // as in your example, discussion_point id is a string
+    point: string;
+    comments: Comment[];
+};
 
 export type CommentItem = {
     id: number;
@@ -57,203 +62,213 @@ export type ObjectiveWithComments = {
     objective: string;
     created_at: string;
     updated_at: string;
-    comments: CommentItem[];
+    discussion_points: DiscussionPointWithComments[];
+    // comments: CommentItem[];
 };
 
 
-const objective = {
-    "id": 1,
-    "objective": "Who BIMAS is",
-    "created_at": "2026-01-08T08:13:36.000000Z",
-    "updated_at": "2026-01-08T08:13:36.000000Z",
-    "comment": [
-        {
-            id: 1,
-            "group_id": 5,
-            "comment": "",
-            "discussion_point": {
-                "id": "1",
-                "point": "Share the Mission and financial Inclusion agenda.",
-            },
-
-            "issues": [
-                {
-                    "id": 1,
-                    "issue": "This is a test issue",
-
-                }],
+// export type ObjectiveWithComments = {
+//     id: number;
+//     objective: string;
+//     created_at: string;
+//     updated_at: string;
+//     comments: CommentItem[];
+// };
 
 
-        }
-    ],
-}
+// const objective = {
+//     "id": 1,
+//     "objective": "Who BIMAS is",
+//     "created_at": "2026-01-08T08:13:36.000000Z",
+//     "updated_at": "2026-01-08T08:13:36.000000Z",
+//     "comment": [
+//         {
+//             id: 1,
+//             "group_id": 5,
+//             "comment": "",
+//             "discussion_point": {
+//                 "id": "1",
+//                 "point": "Share the Mission and financial Inclusion agenda.",
+//             },
+
+//             "issues": [
+//                 {
+//                     "id": 1,
+//                     "issue": "This is a test issue",
+
+//                 }],
+
+
+//         }
+//     ],
+// }
 
 
 
 
 
-const testData: ObjectiveWithComments[] = [
-    {
-        id: 1,
-        objective: "Who BIMAS is",
-        created_at: "2026-01-08T08:13:36.000000Z",
-        updated_at: "2026-01-08T08:13:36.000000Z",
-        comments: [
-            {
-                id: 1,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "1", point: "Share the Mission and financial Inclusion agenda. Credit provision services, difference between us and banks" },
-                issues: []
-            },
+// const testData: ObjectiveWithComments[] = [
+//     {
+//         id: 1,
+//         objective: "Who BIMAS is",
+//         created_at: "2026-01-08T08:13:36.000000Z",
+//         updated_at: "2026-01-08T08:13:36.000000Z",
+//         comments: [
+//             {
+//                 id: 1,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "1", point: "Share the Mission and financial Inclusion agenda. Credit provision services, difference between us and banks" },
+//                 issues: []
+//             },
 
-        ],
-    },
-    {
-        id: 2,
-        objective: "Explain CBK regulatory requirements on savings",
-        created_at: "2026-01-08T08:13:36.000000Z",
-        updated_at: "2026-01-08T08:13:36.000000Z",
-        comments: [
-            {
-                id: 3,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "1", point: "CBK Regulation - Share the advantages" },
-                issues: []
-            },
-            {
-                id: 4,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "2", point: "Compliance - savings and previous discussion- Importance" },
-                issues: []
-            },
-            {
-                id: 5,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "3", point: "Quarterly statements to be shared to clients through email" },
-                issues: []
-            }
-        ]
-    },
-    {
-        id: 5,
-        objective: "Explain BIMAS implementation on the same",
-        created_at: "2026-01-08T08:16:27.000000Z",
-        updated_at: "2026-01-08T08:16:27.000000Z",
-        comments: [
-            {
-                id: 6,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "1", point: "Savings utilised to repay loans and create new funding opportunities" },
-                issues: []
-            },
-            {
-                id: 6,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "2", point: "Emphasize that clients to continue to repay loans even after payoffs" },
-                issues: []
-            },
-            {
-                id: 7,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "3", point: "Clients with savings no loan- co guarantee- Encourage discussion on how the group clears loans for defaulters" },
-                issues: []
-            },
-            {
-                id: 8,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "4", point: "Waiver on interest for prepayments" },
-                issues: []
-            },
-            {
-                id: 9,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "5", point: "Clients who paid for defaulted clients and want their savings back" },
-                issues: []
-            },
-            {
-                id: 10,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "6", point: "Confirm we close in 6 months" },
-                issues: []
-            }
-        ]
-    },
-    {
-        id: 6,
-        objective: "Show impact of payoff on group status",
-        created_at: "2026-01-08T08:16:27.000000Z",
-        updated_at: "2026-01-08T08:16:27.000000Z",
-        comments: [
-            {
-                id: 11,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "1", point: "Be clear on savings used to repay loans." },
-                issues: []
-            },
-            {
-                id: 12,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "2", point: "Have data per client per group" },
-                issues: []
-            }
-        ]
-    },
-    {
-        id: 7,
-        objective: "Discuss new lending model",
-        created_at: "2026-01-08T08:16:27.000000Z",
-        updated_at: "2026-01-08T08:16:27.000000Z",
-        comments: [
-            {
-                id: 13,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "1", point: "Group co-guarantee" },
-                issues: []
-            },
-            {
-                id: 14,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "2", point: "Group cohesion even without savings" },
-                issues: []
-            },
-            {
-                id: 15,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "3", point: "New model of loan graduation based on repayment rate" },
-                issues: []
-            },
-            {
-                id: 16,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "4", point: "Loan Securities, appraisals, chattels for group clients" },
-                issues: []
-            },
-            {
-                id: 17,
-                group_id: 5,
-                comment: "",
-                discussion_point: { id: "5", point: "Diversify group activities - Merry go round and welfare activities" },
-                issues: []
-            }
-        ]
-    },
-];
+//         ],
+//     },
+//     {
+//         id: 2,
+//         objective: "Explain CBK regulatory requirements on savings",
+//         created_at: "2026-01-08T08:13:36.000000Z",
+//         updated_at: "2026-01-08T08:13:36.000000Z",
+//         comments: [
+//             {
+//                 id: 3,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "1", point: "CBK Regulation - Share the advantages" },
+//                 issues: []
+//             },
+//             {
+//                 id: 4,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "2", point: "Compliance - savings and previous discussion- Importance" },
+//                 issues: []
+//             },
+//             {
+//                 id: 5,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "3", point: "Quarterly statements to be shared to clients through email" },
+//                 issues: []
+//             }
+//         ]
+//     },
+//     {
+//         id: 5,
+//         objective: "Explain BIMAS implementation on the same",
+//         created_at: "2026-01-08T08:16:27.000000Z",
+//         updated_at: "2026-01-08T08:16:27.000000Z",
+//         comments: [
+//             {
+//                 id: 6,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "1", point: "Savings utilised to repay loans and create new funding opportunities" },
+//                 issues: []
+//             },
+//             {
+//                 id: 6,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "2", point: "Emphasize that clients to continue to repay loans even after payoffs" },
+//                 issues: []
+//             },
+//             {
+//                 id: 7,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "3", point: "Clients with savings no loan- co guarantee- Encourage discussion on how the group clears loans for defaulters" },
+//                 issues: []
+//             },
+//             {
+//                 id: 8,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "4", point: "Waiver on interest for prepayments" },
+//                 issues: []
+//             },
+//             {
+//                 id: 9,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "5", point: "Clients who paid for defaulted clients and want their savings back" },
+//                 issues: []
+//             },
+//             {
+//                 id: 10,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "6", point: "Confirm we close in 6 months" },
+//                 issues: []
+//             }
+//         ]
+//     },
+//     {
+//         id: 6,
+//         objective: "Show impact of payoff on group status",
+//         created_at: "2026-01-08T08:16:27.000000Z",
+//         updated_at: "2026-01-08T08:16:27.000000Z",
+//         comments: [
+//             {
+//                 id: 11,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "1", point: "Be clear on savings used to repay loans." },
+//                 issues: []
+//             },
+//             {
+//                 id: 12,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "2", point: "Have data per client per group" },
+//                 issues: []
+//             }
+//         ]
+//     },
+//     {
+//         id: 7,
+//         objective: "Discuss new lending model",
+//         created_at: "2026-01-08T08:16:27.000000Z",
+//         updated_at: "2026-01-08T08:16:27.000000Z",
+//         comments: [
+//             {
+//                 id: 13,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "1", point: "Group co-guarantee" },
+//                 issues: []
+//             },
+//             {
+//                 id: 14,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "2", point: "Group cohesion even without savings" },
+//                 issues: []
+//             },
+//             {
+//                 id: 15,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "3", point: "New model of loan graduation based on repayment rate" },
+//                 issues: []
+//             },
+//             {
+//                 id: 16,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "4", point: "Loan Securities, appraisals, chattels for group clients" },
+//                 issues: []
+//             },
+//             {
+//                 id: 17,
+//                 group_id: 5,
+//                 comment: "",
+//                 discussion_point: { id: "5", point: "Diversify group activities - Merry go round and welfare activities" },
+//                 issues: []
+//             }
+//         ]
+//     },
+// ];
 
 
 
@@ -263,7 +278,7 @@ export default function singleGroup() {
 
     console.log("Props: ", props);
 
-    const extractedComments = convertObjectivesToComments(testData);
+    const extractedComments = convertObjectivesToComments2(props.objectives as ObjectiveWithComments[]);
 
     const [comments, setComments] = useState<Comment[]>(extractedComments ?? []);
 
@@ -299,15 +314,20 @@ export default function singleGroup() {
 
 
         try {
+            const csrfToken = document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute('content');
+
             const response = await fetch(route("comments.update", currentComment.id), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken || '',
                     // Add auth token here if needed, e.g.,
                     // 'Authorization': `Bearer ${props.csrf_token}`,
                 },
                 body: JSON.stringify({
-                    id: currentComment.id,
+                    // id: currentComment.id,
                     comment: currentComment.comment,
                 }),
             });
@@ -395,71 +415,147 @@ export default function singleGroup() {
 
 
     async function saveIssue(issue: string, issue_id?: number) {
-        if (!issue) {
-            toast("Issue is empty");
-            return;
-        }
 
-        if (issue_id) {
 
-            setCurrentComment((prev) => {
-                if (!prev) return prev;
-
-                const updatedIssues = prev.issues.map((i) =>
-                    i.id === issue_id
-                        ? { ...i, issue }
-                        : i
-                );
-
-                return {
-                    ...prev,
-                    issues: updatedIssues,
-                };
+        try {
+            const csrfToken = document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute('content');
+            const response = await fetch(route("issues.store"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken || '',
+                    // Add auth token here if needed, e.g.,
+                    // 'Authorization': `Bearer ${props.csrf_token}`,
+                },
+                body: JSON.stringify({
+                    id: issue_id,
+                    issue,
+                    comment_id: currentComment?.id
+                }),
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
 
-        } else {
+            }
 
-            setCurrentComment((prev) => {
-                if (!prev) return prev;
+            const data = await response.json();
+            console.log('issue saved successfully!', data);
+            setLoading(false);
 
-                const updatedIssues = prev.issues.map((c, i) =>
-                    i === currentIndex
-                        ? { ...c, issue: issue ?? "" }
-                        : c
-                );
 
-                return {
-                    ...prev,
-                    issues: updatedIssues,
-                };
-            });
+            if (issue_id) {
+
+                setCurrentComment((prev) => {
+                    if (!prev) return prev;
+
+                    const updatedIssues = prev.issues.map((i) =>
+                        i.id === issue_id
+                            ? { ...i, issue }
+                            : i
+                    );
+
+                    return {
+                        ...prev,
+                        issues: updatedIssues,
+                    };
+                });
+
+
+            } else {
+
+                setCurrentComment((prev) => {
+                    if (!prev) return prev;
+
+                    const updatedIssues = prev.issues.map((c, i) =>
+                        i === currentIndex
+                            ? { ...c, issue: issue ?? "" }
+                            : c
+                    );
+
+                    return {
+                        ...prev,
+                        issues: updatedIssues,
+                    };
+                });
+            }
+
+
+
+            return true;
+        } catch (error) {
+            console.error('Failed to save comment:', error);
+            setLoading(false);
+            return false;
         }
+
+
 
     }
 
     async function removeIssue(issue_id: number) {
 
-        const confirmed = window.confirm(
-            "Are you sure you want to delete this item?"
-        );
 
-        if (!confirmed) {
-            return;
+        try {
+
+            const csrfToken = document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute('content');
+            const response = await fetch(route("issues.destroy", issue_id), {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken || '',
+                    // Add auth token here if needed, e.g.,
+                    // 'Authorization': `Bearer ${props.csrf_token}`,
+                },
+                body: JSON.stringify({
+                    id: issue_id,
+
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+
+            }
+
+            const data = await response.json();
+            console.log('Issue removed successfully!', data);
+
+            const confirmed = window.confirm(
+                "Are you sure you want to delete this item?"
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            setCurrentComment((prev) => {
+                if (!prev) return prev;
+
+                const newIssues = prev.issues.filter(
+                    (i) => i.id !== issue_id && i.tempId !== issue_id
+                )
+
+                return {
+                    ...prev,
+                    issues: newIssues
+                }
+            })
+            setLoading(false);
+
+            return true;
+        } catch (error) {
+            console.error('Failed to save issue:', error);
+            setLoading(false);
+            return false;
         }
 
-        setCurrentComment((prev) => {
-            if (!prev) return prev;
 
-            const newIssues = prev.issues.filter(
-                (i) => i.id !== issue_id && i.tempId !== issue_id
-            )
 
-            return {
-                ...prev,
-                issues: newIssues
-            }
-        })
     }
 
 
