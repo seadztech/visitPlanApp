@@ -14,7 +14,7 @@ Route::get('showOutpostGroups/{outpost_id}', [IndexController::class, 'showOutpo
 
 Route::get('showIndividualGroup/{group_id}', [IndexController::class, 'showSingleGroup'])->name('groups.show');
 
-Route::post('commentsUpdate', [IndexController::class, 'commentsUpdate'])->name('comments.update');
+Route::post('commentsUpdate/{id}', [IndexController::class, 'commentsUpdate'])->name('comments.update');
 
 Route::post('issuesStore', [IndexController::class, 'issuesStore'])->name('issues.store');
 

@@ -153,11 +153,14 @@ class IndexController extends Controller
             ], 422);
         }
 
-        $issue = new DiscussionIssue();
+       
+
+        $issue = $request->id ? DiscussionIssue::find($request->id) :  new DiscussionIssue();
+
         $issue->issue = $request->issue;
         $issue->comment_id = $request->comment_id;
 
-        $issue->save();
+        $request->id ? $issue->update() : $issue->save();
 
           return response()->json([
             'status' => 'success',
