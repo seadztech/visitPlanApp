@@ -343,6 +343,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                             >
                                                                 Edit
                                                             </Button>
+                                                            
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
