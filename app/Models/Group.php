@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Group extends Model
 {
@@ -32,4 +33,13 @@ class Group extends Model
     {
         return $this->belongsTo(Outpost::class);
     }
+
+    public function comments(): HasMany {
+        return $this->hasMany(Comment::class);
+    }
+
+    // public function objectives(): HasMany {
+    //     return $this->hasMany(Objective::class);
+    // }
+
 }
