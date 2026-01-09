@@ -1,20 +1,20 @@
 import { PageProps } from '@inertiajs/core';
-import { 
-  Building2, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
-  ChevronsRight, 
-  Eye, 
-  Plus, 
-  Search, 
-  Calendar,
-  Clock,
-  Users,
-  TrendingUp,
-  TrendingDown,
-  Banknote,
-  Wallet
+import {
+    Building2,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+    Eye,
+    Plus,
+    Search,
+    Calendar,
+    Clock,
+    Users,
+    TrendingUp,
+    TrendingDown,
+    Banknote,
+    Wallet
 } from 'lucide-react';
 import { useState } from 'react';
 import MainLayout from './Layouts/MainLayout';
@@ -31,34 +31,34 @@ import { Progress } from '@/components/ui/progress';
 
 // Define the Group type
 interface Group {
-  id: number;
-  outpost_id: number;
-  branch_id: string;
-  village: string;
-  credit_officer_id: string;
-  group_id: string;
-  group_name: string;
-  group_product_id: string;
-  savings_balance_b4: number;
-  savings_balance_after: number;
-  loan_balance_b4: number;
-  loan_balance_after: number;
-  arrears_b4: number;
-  arrears_after: number;
-  accts_b4: number;
-  accts_after: number;
-  venue: string;
-  frequency: string;
-  meeting_day: string;
-  time: string;
-  created_at: string;
-  updated_at: string;
+    id: number;
+    outpost_id: number;
+    branch_id: string;
+    village: string;
+    credit_officer_id: string;
+    group_id: string;
+    group_name: string;
+    group_product_id: string;
+    savings_balance_b4: number;
+    savings_balance_after: number;
+    loan_balance_b4: number;
+    loan_balance_after: number;
+    arrears_b4: number;
+    arrears_after: number;
+    accts_b4: number;
+    accts_after: number;
+    venue: string;
+    frequency: string;
+    meeting_day: string;
+    time: string;
+    created_at: string;
+    updated_at: string;
 }
 
 // Define props with groups
 interface Props extends PageProps {
-  groups: Group[];
-  outpostId: string;
+    groups: Group[];
+    outpostId: string;
 }
 
 export default function OutPostGroups({ groups: initialGroups, outpostId }: Props) {
@@ -71,7 +71,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
     // Filter and sort groups
     const filteredGroups = initialGroups.filter(
         (group) =>
-            group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             group.village.toLowerCase().includes(searchTerm.toLowerCase()) ||
             group.group_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             group.credit_officer_id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -168,11 +168,11 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                     Managing {filteredGroups.length} groups for Outpost ID: {outpostId}
                                 </p>
                             </div>
-                           
+
                         </div>
                     </div>
 
-                  
+
 
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex-1">
@@ -222,7 +222,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="hidden md:flex md:items-center md:justify-between">
                             <div>
                                 <CardTitle className="text-lg font-semibold">Groups Overview</CardTitle>
@@ -254,14 +254,14 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                             </div>
                         </div>
                     </CardHeader>
-                    
+
                     <CardContent className="p-0">
                         <div className="overflow-hidden rounded-lg border md:rounded-xl">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
-                                        <TableHead 
-                                            className="cursor-pointer text-xs font-medium hover:bg-muted md:text-sm md:font-semibold" 
+                                        <TableHead
+                                            className="cursor-pointer text-xs font-medium hover:bg-muted md:text-sm md:font-semibold"
                                             onClick={() => handleSort('group_name')}
                                         >
                                             <div className="flex items-center gap-1.5 md:gap-2">
@@ -273,9 +273,9 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                 )}
                                             </div>
                                         </TableHead>
-                                       
-                                      
-                                    
+
+
+
                                         <TableHead className="text-right text-xs font-medium md:text-sm md:font-semibold">
                                             Actions
                                         </TableHead>
@@ -297,18 +297,18 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                                 <Users className="h-4 w-4 text-primary" />
                                                             </div>
                                                             <div>
-                                                                <div className="font-medium">{group.group_name}</div>
+                                                                <div className="font-medium max-w-60">{group.group_name}</div>
                                                                 <div className="mt-1 flex items-center gap-1">
                                                                     <Badge variant="outline" className="px-2 py-0.5 text-xs">
                                                                         {group.group_id}
                                                                     </Badge>
-                                                                    <Badge 
-                                                                        variant="outline" 
+                                                                    <Badge
+                                                                        variant="outline"
                                                                         className={`px-2 py-0.5 text-xs ${getFrequencyColor(group.frequency)}`}
                                                                     >
-                                                                        {group.frequency === 'W' ? 'Weekly' : 
-                                                                         group.frequency === 'M' ? 'Monthly' : 
-                                                                         group.frequency === 'F' ? 'Fortnightly' : group.frequency}
+                                                                        {group.frequency === 'W' ? 'Weekly' :
+                                                                            group.frequency === 'M' ? 'Monthly' :
+                                                                                group.frequency === 'F' ? 'Fortnightly' : group.frequency}
                                                                     </Badge>
                                                                 </div>
                                                                 <div className="mt-1 text-xs text-muted-foreground md:hidden">
@@ -317,17 +317,17 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    
-                                                   
-                                                   
-                                                    
-                                                   
+
+
+
+
+
                                                     <TableCell className="text-right md:py-3">
                                                         <div className="flex justify-end gap-2">
-                                                            <Button 
-                                                                asChild 
-                                                                variant="default" 
-                                                                size="xs" 
+                                                            <Button
+                                                                asChild
+                                                                variant="default"
+                                                                size="xs"
                                                                 className="h-8 gap-1.5 px-2 text-xs hover:bg-primary/10 hover:text-primary md:size-sm md:px-3 md:text-sm"
                                                             >
                                                                 <Link href={route('groups.show', group.id)}>
@@ -336,14 +336,8 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                                     <span className="md:hidden">View</span>
                                                                 </Link>
                                                             </Button>
-                                                            <Button 
-                                                                variant="outline" 
-                                                                size="xs" 
-                                                                className="hidden h-8 text-xs md:inline-flex md:size-sm md:text-sm"
-                                                            >
-                                                                Edit
-                                                            </Button>
-                                                            
+
+
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -362,7 +356,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                             {searchTerm ? 'Try adjusting your search terms' : 'Start by creating your first group'}
                                                         </p>
                                                     </div>
-                                                    
+
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -371,7 +365,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                             </Table>
                         </div>
                     </CardContent>
-                    
+
                     <CardFooter className="py-3">
                         <div className="flex w-full flex-col items-center justify-between gap-3 sm:flex-row">
                             <div className="flex items-center gap-2 text-xs text-muted-foreground md:text-sm">

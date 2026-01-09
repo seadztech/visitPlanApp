@@ -62,7 +62,7 @@ export default function Welcome({ outposts }: Props) {
         }
     };
 
-  
+
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -94,7 +94,7 @@ export default function Welcome({ outposts }: Props) {
                                 />
                             </div>
                         </div>
-                       
+
                     </div>
                 </div>
 
@@ -104,7 +104,7 @@ export default function Welcome({ outposts }: Props) {
                         <div className="md:hidden">
                             {/* Mobile header remains unchanged */}
                             <div className="flex flex-col justify-between gap-4 sm:items-center">
-                                <div className="text-center">Outposts List</div>
+                                <div className="text-center">Branches</div>
                                 <div>
                                     <CardDescription className="text-center">
                                         Showing {paginatedOutposts.length} of {filteredOutposts.length} outposts
@@ -123,7 +123,7 @@ export default function Welcome({ outposts }: Props) {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="hidden md:flex md:items-center md:justify-between">
                             <div>
                                 <CardTitle className="text-lg font-semibold">Outposts</CardTitle>
@@ -155,14 +155,14 @@ export default function Welcome({ outposts }: Props) {
                             </div>
                         </div>
                     </CardHeader>
-                    
+
                     <CardContent className="p-0">
                         <div className="overflow-hidden rounded-lg border md:rounded-xl">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
-                                        <TableHead 
-                                            className="cursor-pointer text-xs font-medium hover:bg-muted md:text-sm md:font-semibold" 
+                                        <TableHead
+                                            className="cursor-pointer text-xs font-medium hover:bg-muted md:text-sm md:font-semibold"
                                             onClick={() => handleSort('name')}
                                         >
                                             <div className="flex items-center gap-1.5 md:gap-2">
@@ -174,8 +174,8 @@ export default function Welcome({ outposts }: Props) {
                                                 )}
                                             </div>
                                         </TableHead>
-                                        <TableHead 
-                                            className="cursor-pointer text-xs font-medium hover:bg-muted md:text-sm md:font-semibold" 
+                                        <TableHead
+                                            className="cursor-pointer text-xs font-medium hover:bg-muted md:text-sm md:font-semibold"
                                             onClick={() => handleSort('branch_code')}
                                         >
                                             <div className="flex items-center gap-1.5 md:gap-2">
@@ -228,10 +228,10 @@ export default function Welcome({ outposts }: Props) {
                                                 </TableCell>
                                                 <TableCell className="text-right md:py-3">
                                                     <div className="flex justify-end gap-2">
-                                                        <Button 
-                                                            asChild 
-                                                            variant="ghost" 
-                                                            size="xs" 
+                                                        <Button
+                                                            asChild
+                                                            variant="ghost"
+                                                            size="xs"
                                                             className="h-8 gap-1.5 px-2 text-xs bg-primary text-primary-foreground hover:text-primary md:size-sm md:px-3 md:text-sm"
                                                         >
                                                             <Link href={route('outposts.groups', outpost.id)}>
@@ -240,7 +240,7 @@ export default function Welcome({ outposts }: Props) {
                                                                 <span className="md:hidden">View</span>
                                                             </Link>
                                                         </Button>
-                                                      
+
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -258,7 +258,7 @@ export default function Welcome({ outposts }: Props) {
                                                             {searchTerm ? 'Try adjusting your search terms' : 'Start by creating your first outpost'}
                                                         </p>
                                                     </div>
-                                                    
+
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -267,7 +267,7 @@ export default function Welcome({ outposts }: Props) {
                             </Table>
                         </div>
                     </CardContent>
-                    
+
                     <CardFooter className="py-3">
                         <div className="flex w-full flex-col items-center justify-between gap-3 sm:flex-row">
                             <div className="flex items-center gap-2 text-xs text-muted-foreground md:text-sm">
@@ -391,7 +391,7 @@ export default function Welcome({ outposts }: Props) {
                     </CardFooter>
                 </Card>
 
-              
+
             </div>
         </MainLayout>
     );
