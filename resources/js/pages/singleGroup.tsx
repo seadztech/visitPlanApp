@@ -684,7 +684,7 @@ export default function singleGroup() {
 
                                                                         if (!prev) return prev;
                                                                         const newIssues = prev.issues.map((c, i) =>
-                                                                            i === currentIndex
+                                                                            c.tempId === issue.tempId
                                                                                 ? { ...c, issue: issue_message }
                                                                                 : c
                                                                         )
