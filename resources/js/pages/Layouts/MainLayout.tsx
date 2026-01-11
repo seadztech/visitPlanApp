@@ -123,15 +123,7 @@ export default function MainLayout({ title, children }: Props) {
                         </button>
 
                         <div className="flex items-center gap-3">
-                            <div className="rounded-xl border border-white/30 bg-white/20 p-2">
-                                <div className="relative">
-                                    <MapPin className="h-7 w-7" />
-                                    <div className="absolute -right-1 -bottom-1 rounded-full bg-amber-400 p-1">
-                                        <Calendar className="h-3 w-3 text-blue-700" />
-                                    </div>
-                                </div>
-                            </div>
-
+                                <img className='w-12'  src="/favicon.png" alt=""  />
                             <div>
                                 <h1 className="text-lg font-bold">
                                     Bimas Visits Plan App
