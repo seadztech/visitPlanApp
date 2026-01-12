@@ -272,7 +272,6 @@ export type ObjectiveWithComments = {
 
 
 
-
 export default function singleGroup() {
     const { props } = usePage();
 
@@ -291,6 +290,18 @@ export default function singleGroup() {
 
     const [currentComment, setCurrentComment] = useState<Comment | undefined>(comments.length > 0 ? comments[0] : undefined);
 
+    useEffect(() => {
+
+        const savedIndex = localStorage.getItem(`group-${(props.group as any).id}`);
+
+
+        if (savedIndex) {
+            setCurrentIndex(parseInt(savedIndex));
+            setCurrentComment(comments[parseInt(savedIndex)]);
+        }
+
+    }, [])
+
     async function save() {
 
         if (!loading) {
@@ -304,14 +315,30 @@ export default function singleGroup() {
         }
 
         console.log("issues: ", currentComment?.issues);
+        if (currentIndex === undefined || !currentComment) return { success: false, message: "No comment selected" };
 
-        if (currentIndex === undefined || !currentComment) return;
-
-
-        for (let issue of currentComment?.issues) {
-            saveIssue(issue.issue, issue.id);
+        if (currentComment?.comment?.length < 2) {
+            toast("Comment must be atleast 2 Characters long");
+            setLoading(false);
+            return { success: false, message: "Comment must be at least 2 characters long" };
         }
 
+        let issueSuccessful = true;
+        let issueMessage = undefined;
+
+        for (let issue of currentComment?.issues) {
+            const { success, message } = await saveIssue(issue.issue, issue.id);
+            if (!success) {
+                issueSuccessful = false;
+                issueMessage = message;
+            }
+        }
+
+
+        if (!issueSuccessful) {
+            setLoading(false);
+            return { success: false, message: issueMessage }
+        }
 
         try {
             const csrfToken = document
@@ -340,24 +367,25 @@ export default function singleGroup() {
             const data = await response.json();
             console.log('Comment saved successfully!', data);
             setLoading(false);
-            return true;
+
+            return { success: true };
         } catch (error) {
             console.error('Failed to save comment:', error);
             setLoading(false);
-            return false;
+            return { success: false, message: (error as any).message };
         }
     }
 
-    function goNext() {
+    async function goNext() {
 
         console.log("next: ", currentIndex, comments.length, currentComment);
 
         if (currentIndex == undefined) return;
 
-        const isSaved = save();
+        const { success, message } = await save();
 
-        if (!isSaved) {
-            toast("Save failed");
+        if (!success) {
+            toast(message);
             return;
         }
 
@@ -379,17 +407,19 @@ export default function singleGroup() {
 
             setCurrentComment(comments[currentIndex + 1]);
 
+            localStorage.setItem(`group-${(props.group as any).id}`, `${currentIndex + 1}`);
+
         }
     }
 
     function goBack() {
         if (currentIndex == undefined) return;
-        const isSaved = save();
+        // const isSaved = save();
 
-        if (!isSaved) {
-            toast("Save failed");
-            return;
-        }
+        // if (!isSaved) {
+        //     toast("Save failed");
+        //     return;
+        // }
         if (currentIndex !== undefined && currentIndex > 0 && currentComment) {
 
 
@@ -409,25 +439,28 @@ export default function singleGroup() {
             })
 
             setCurrentComment(comments[currentIndex - 1]);
+            localStorage.setItem(`group-${(props.group as any).id}`, `${currentIndex - 1}`);
         }
 
     }
 
 
     async function saveIssue(issue: string, issue_id?: number) {
-
-
         try {
+
+            if (issue.length < 2) {
+                return { success: false, message: "Issue must be atleast 2 characters." }
+            }
+
             const csrfToken = document
                 .querySelector('meta[name="csrf-token"]')
                 ?.getAttribute('content');
+
             const response = await fetch(route("issues.store"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken || '',
-                    // Add auth token here if needed, e.g.,
-                    // 'Authorization': `Bearer ${props.csrf_token}`,
                 },
                 body: JSON.stringify({
                     id: issue_id,
@@ -438,16 +471,12 @@ export default function singleGroup() {
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
-
             }
 
             const data = await response.json();
             console.log('issue saved successfully!', data);
             setLoading(false);
-
-
             if (issue_id) {
-
                 setCurrentComment((prev) => {
                     if (!prev) return prev;
 
@@ -482,20 +511,37 @@ export default function singleGroup() {
                 });
             }
 
-
-
-            return true;
-        } catch (error) {
+            return { success: true };
+        } catch (error: any) {
             console.error('Failed to save comment:', error);
             setLoading(false);
-            return false;
+            return { success: false, message: error.message }
         }
 
 
 
     }
 
-    async function removeIssue(issue_id: number) {
+    async function removeIssue(issue_id?: number, temp_id?: number) {
+
+        console.log("remove issue: ", "temp id: ", temp_id, "ID: ", issue_id);
+
+        if (temp_id && !issue_id) {
+            setCurrentComment((prev) => {
+                if (!prev) return prev;
+
+                const newIssues = prev.issues.filter(
+                    (i) => i.tempId !== temp_id
+                )
+
+                return {
+                    ...prev,
+                    issues: newIssues
+                }
+            })
+
+            return;
+        }
 
 
         try {
@@ -537,7 +583,7 @@ export default function singleGroup() {
                 if (!prev) return prev;
 
                 const newIssues = prev.issues.filter(
-                    (i) => i.id !== issue_id && i.tempId !== issue_id
+                    (i) => i.id !== issue_id
                 )
 
                 return {
@@ -572,10 +618,9 @@ export default function singleGroup() {
 
     return (
         <MainLayout title="Group data entry point" >
-            <div className='w-[98%] h-[3rem] mx-auto flex justify-s items-end gap-1'>
+            <div className='w-[98%] h-[3rem] mx-auto flex justify-between items-end gap-1'>
                 <h4 className='text-xs font-bold flex justify-start items-center h-8 px-2'>{(props.group as any)?.group_name}</h4>
                 <GroupInformation group={props.group} />
-
             </div>
             <p className='border text-center text-blue-500 border-blue-100 my-2 font-bold '>{
                 currentIndex != undefined ? (
@@ -584,8 +629,7 @@ export default function singleGroup() {
                     <span>No Comments</span>
                 )
             }</p>
-            <div className=" w-full flex justify-center  h-[calc(100vh-15rem)] bg-blue-50 overflow-auto">
-
+            <div className=" w-full flex justify-center  h-[calc(100dvh-15rem)] bg-blue-50 overflow-auto">
 
                 {
                     comments && comments.length > 0 && currentIndex !== undefined && currentComment ? (
@@ -620,7 +664,6 @@ export default function singleGroup() {
                                         className=' text-blue-500'
                                         placeholder={currentComment?.comment}
                                     />
-
 
 
                                     <div className="space-y-1 border p-1">
@@ -703,7 +746,7 @@ export default function singleGroup() {
                                                         />
                                                         <Button
                                                             onClick={() => {
-                                                                removeIssue((issue.id || issue.tempId) as number)
+                                                                removeIssue(issue.id, issue.tempId)
                                                             }}
                                                             className='rounded-none'><Delete /></Button>
 
@@ -731,20 +774,54 @@ export default function singleGroup() {
 
             </div>
             <div className="flex flex-row justify-between p-2 h-[3rem] border-t">
-                <Button
-                    onClick={goBack}
-                    disabled={currentIndex == undefined || currentIndex == 0 ? true : false}>
-                    {
-                        loading ? (<Loader className='animate-spin' />) : "Back"
-                    }
-                </Button>
-                <Button
-                    onClick={goNext}
-                    disabled={currentIndex == undefined || currentIndex == comments.length - 1}>
-                    {
-                        loading ? (<Loader className='animate-spin' />) : "Next"
-                    }
-                </Button>
+                {currentIndex == 0 ? <Button
+                    onClick={() => {
+                        localStorage.removeItem(`group-${(props.group as any).id}`);
+                        window.history.back()
+                    }}
+                >
+                    Exit
+                </Button> : (
+                    <Button
+                        onClick={goBack}>
+
+                        Back
+                    </Button>
+                )}
+
+                {
+                    currentIndex == comments.length - 1 ? (
+                        <Button
+                            onClick={async () => {
+
+                                const { success, message } = await save();
+
+
+                                localStorage.removeItem(`group-${(props.group as any).id}`);
+
+                                if (!success) {
+                                    toast(message);
+
+                                } else {
+                                    window.history.back();
+                                }
+
+                            }}>
+
+                            {
+                                loading ? (<Loader className='animate-spin' />) : "Finish"
+                            }
+                        </Button>
+                    ) : (
+                        <Button
+                            onClick={goNext}>
+
+                            {
+                                loading ? (<Loader className='animate-spin' />) : "Next"
+                            }
+                        </Button>
+                    )
+                }
             </div>
 
         </MainLayout>
