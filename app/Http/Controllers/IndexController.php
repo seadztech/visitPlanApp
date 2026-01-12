@@ -115,7 +115,7 @@ class IndexController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'comment' => 'required|string|min:3|max:2000'
+            'comment' => 'required|string|min:2|max:2000'
         ]);
 
         if ($validator->fails()) {
@@ -141,19 +141,19 @@ class IndexController extends Controller
     public function issuesStore(Request $request)
     {
 
-         $validator = Validator::make($request->all(), [
-            'issue' => 'required|string|min:3|max:2000',
+        $validator = Validator::make($request->all(), [
+            'issue' => 'required|string|min:2|max:2000',
             'comment_id' => 'required'
         ]);
 
-         if ($validator->fails()) {
+        if ($validator->fails()) {
             return response()->json([
                 'status' => 'validation_error',
                 'errors' => $validator->errors()
             ], 422);
         }
 
-       
+
 
         $issue = $request->id ? DiscussionIssue::find($request->id) :  new DiscussionIssue();
 
@@ -162,7 +162,7 @@ class IndexController extends Controller
 
         $request->id ? $issue->update() : $issue->save();
 
-          return response()->json([
+        return response()->json([
             'status' => 'success',
             'message' => 'Comment updated successfully',
             'data' => $issue

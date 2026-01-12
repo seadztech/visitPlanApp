@@ -42,14 +42,10 @@ export function convertObjectivesToComments2(
           objective_id: objective.id,
           created_at: objective.created_at,
           updated_at: objective.updated_at
-
-
         })
       }
 
     }
-
-
   }
 
 

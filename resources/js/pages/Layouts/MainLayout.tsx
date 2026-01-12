@@ -1,3 +1,4 @@
+import { Toaster } from '@/components/ui/sonner';
 import { Head, Link } from '@inertiajs/react';
 import {
     Calendar,
@@ -151,7 +152,9 @@ export default function MainLayout({ title, children }: Props) {
             {/* ================= CONTENT ================= */}
             <main>
                 {children}
+
             </main>
+            <Toaster />
         </div>
     );
 }
