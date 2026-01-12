@@ -74,7 +74,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId, pagina
     // Debounced search function
     const debouncedSearch = debounce((search: string) => {
         router.get(
-            route('outpost.groups', outpostId),
+            route('outposts.groups', outpostId),
             {
                 search: search,
                 page: 1, // Reset to first page on search
@@ -106,7 +106,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId, pagina
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
         router.get(
-            route('outpost.groups', outpostId),
+            route('outposts.groups', outpostId),
             {
                 search: searchTerm,
                 page: page,
@@ -126,7 +126,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId, pagina
         setItemsPerPage(value);
         setCurrentPage(1); // Reset to first page
         router.get(
-            route('outpost.groups', outpostId),
+            route('outposts.groups', outpostId),
             {
                 search: searchTerm,
                 page: 1,
@@ -148,7 +148,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId, pagina
         setSortDirection(newDirection);
 
         router.get(
-            route('outpost.groups', outpostId),
+            route('outposts.groups', outpostId),
             {
                 search: searchTerm,
                 page: currentPage,
