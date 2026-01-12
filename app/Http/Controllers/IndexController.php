@@ -30,59 +30,95 @@ class IndexController extends Controller
 
 public function showOutpostGroups(Request $request, string $village)
 {
-
-    // dd($village);
-
-    $outpost = Outpost::where('name', $village)->first();
-
-    $groups = Group::with('outpost', 'comments')
-        ->where('village', $village)
-        ->get()
-        ->map(function ($group) {
-            // Get comment counts using where clause
-            $totalComments = DB::table('comments')
-                ->where('group_id', $group->group_id)
-                ->count();
-            
-            $nullComments = DB::table('comments')
-                ->where('group_id', $group->group_id)
-                ->where('comment', '')
-                ->count();
-            
-            $nonNullComments = $totalComments - $nullComments;
-            
-            // Determine status
-            if ($totalComments === 0) {
-                $commentStatus = 'pending';
-                $remainingComments = 0;
-            } elseif ($nullComments === 0 && $nonNullComments > 0) {
-                $commentStatus = 'completed';
-                $remainingComments = 0;
-            } elseif ($nullComments === 1 && $nonNullComments >= 0) {
-                $commentStatus = 'in-progress';
-                $remainingComments = 1;
-            } else {
-                $commentStatus = 'in-progress';
-                $remainingComments = $nullComments;
-            }
-            
-            // Add computed properties to the group
-            $group->comment_status = $commentStatus;
-            $group->remaining_comments = $remainingComments;
-            $group->total_comments = $totalComments;
-
-            // dd($nullComments);
-            
-            return $group;
-
-
+    // Get pagination parameters from request
+    $perPage = $request->input('per_page', 10);
+    $page = $request->input('page', 1);
+    $sortBy = $request->input('sort_by', 'group_name');
+    $sortDirection = $request->input('sort_dir', 'asc');
+    $search = $request->input('search', '');
+    
+    // Start building the query
+    $query = Group::with('outpost', 'comments')
+        ->where('village', $village);
+    
+    // Apply search if provided
+    if ($search) {
+        $query->where(function ($q) use ($search) {
+            $q->where('group_name', 'LIKE', "%{$search}%")
+              ->orWhere('group_id', 'LIKE', "%{$search}%")
+              ->orWhere('credit_officer_id', 'LIKE', "%{$search}%")
+              ->orWhere('village', 'LIKE', "%{$search}%");
         });
-
+    }
+    
+    // Apply sorting
+    $validSortColumns = ['group_name', 'comment_status', 'village', 'meeting_day', 
+                        'savings_balance_after', 'loan_balance_after', 'created_at'];
+    $sortBy = in_array($sortBy, $validSortColumns) ? $sortBy : 'group_name';
+    $sortDirection = $sortDirection === 'desc' ? 'desc' : 'asc';
+    
+    $query->orderBy($sortBy, $sortDirection);
+    
+    // Paginate the results
+    $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+    
+    // Transform the groups with comment status
+    $transformedGroups = $paginator->getCollection()->map(function ($group) {
+        // Get comment counts using where clause
+        $totalComments = DB::table('comments')
+            ->where('group_id', $group->group_id)
+            ->count();
         
-
+        $nullComments = DB::table('comments')
+            ->where('group_id', $group->group_id)
+            ->where('comment', '')
+            ->count();
+        
+        $nonNullComments = $totalComments - $nullComments;
+        
+        // Determine status
+        if ($totalComments === 0) {
+            $commentStatus = 'pending';
+            $remainingComments = 0;
+        } elseif ($nullComments === 0 && $nonNullComments > 0) {
+            $commentStatus = 'completed';
+            $remainingComments = 0;
+        } elseif ($nullComments === 1 && $nonNullComments >= 0) {
+            $commentStatus = 'in-progress';
+            $remainingComments = 1;
+        } else {
+            $commentStatus = 'in-progress';
+            $remainingComments = $nullComments;
+        }
+        
+        // Add computed properties to the group
+        $group->comment_status = $commentStatus;
+        $group->remaining_comments = $remainingComments;
+        $group->total_comments = $totalComments;
+        
+        return $group;
+    });
+    
+    // Replace the collection with transformed data
+    $paginator->setCollection($transformedGroups);
+    
     return Inertia::render('OutPostGroups', [
-        'groups' => $groups,
-        'outpostId' => $outpost->id,
+        'groups' => $paginator->items(),
+        'pagination' => [
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+            'from' => $paginator->firstItem(),
+            'to' => $paginator->lastItem(),
+        ],
+        'filters' => [
+            'search' => $search,
+            'sort_by' => $sortBy,
+            'sort_dir' => $sortDirection,
+            'per_page' => $perPage,
+        ],
+        'outpostId' => $village,
     ]);
 }
 

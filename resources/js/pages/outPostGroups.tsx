@@ -1,4 +1,5 @@
 import { PageProps } from '@inertiajs/core';
+import { router } from '@inertiajs/react'; // Add this import
 import {
     Building2,
     ChevronLeft,
@@ -16,7 +17,7 @@ import {
     Banknote,
     Wallet
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Add useEffect
 import MainLayout from './Layouts/MainLayout';
 
 // ShadCN Components
@@ -28,6 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Link } from '@inertiajs/react';
 import { Progress } from '@/components/ui/progress';
+import { debounce } from 'lodash'; // Add this import
 
 // Define the Group type
 interface Group {
@@ -58,50 +60,116 @@ interface Group {
     total_comments: number;
 }
 
-// Define props with groups
+// Define props with pagination
 interface Props extends PageProps {
     groups: Group[];
     outpostId: string;
+    pagination: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+        from: number;
+        to: number;
+    };
+    filters: {
+        search: string;
+        sort_by: string;
+        sort_dir: string;
+        per_page: number;
+    };
 }
 
-export default function OutPostGroups({ groups: initialGroups, outpostId }: Props) {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
-    const [sortColumn, setSortColumn] = useState<keyof Group>('group_name');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+export default function OutPostGroups({ 
+    groups: initialGroups, 
+    outpostId, 
+    pagination, 
+    filters 
+}: Props) {
+    const [searchTerm, setSearchTerm] = useState(filters.search || '');
+    const [currentPage, setCurrentPage] = useState(pagination.current_page);
+    const [itemsPerPage, setItemsPerPage] = useState(pagination.per_page);
+    const [sortColumn, setSortColumn] = useState<keyof Group>(filters.sort_by as keyof Group);
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(filters.sort_dir as 'asc' | 'desc');
 
-    // Filter and sort groups
-    const filteredGroups = initialGroups.filter(
-        (group) =>
-            group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            group.village.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            group.group_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            group.credit_officer_id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Debounced search function
+    const debouncedSearch = debounce((search: string) => {
+        router.get(route('outpost.groups', outpostId), {
+            search: search,
+            page: 1, // Reset to first page on search
+            per_page: itemsPerPage,
+            sort_by: sortColumn,
+            sort_dir: sortDirection,
+        }, {
+            preserveState: true,
+            replace: true,
+            preserveScroll: true,
+        });
+    }, 500);
 
-    // Sort data
-    const sortedGroups = [...filteredGroups].sort((a, b) => {
-        if (sortDirection === 'asc') {
-            return a[sortColumn] > b[sortColumn] ? 1 : -1;
-        } else {
-            return a[sortColumn] < b[sortColumn] ? 1 : -1;
+    // Handle search change
+    useEffect(() => {
+        if (searchTerm !== filters.search) {
+            debouncedSearch(searchTerm);
         }
-    });
+        
+        // Cleanup
+        return () => {
+            debouncedSearch.cancel();
+        };
+    }, [searchTerm]);
 
-    // Pagination
-    const totalPages = Math.ceil(sortedGroups.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedGroups = sortedGroups.slice(startIndex, startIndex + itemsPerPage);
-
-    const handleSort = (column: keyof Group) => {
-        if (sortColumn === column) {
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortColumn(column);
-            setSortDirection('asc');
-        }
+    // Handle pagination change
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        router.get(route('outpost.groups', outpostId), {
+            search: searchTerm,
+            page: page,
+            per_page: itemsPerPage,
+            sort_by: sortColumn,
+            sort_dir: sortDirection,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
     };
+
+    // Handle items per page change
+    const handleItemsPerPageChange = (value: number) => {
+        setItemsPerPage(value);
+        setCurrentPage(1); // Reset to first page
+        router.get(route('outpost.groups', outpostId), {
+            search: searchTerm,
+            page: 1,
+            per_page: value,
+            sort_by: sortColumn,
+            sort_dir: sortDirection,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    // Handle sort
+    const handleSort = (column: keyof Group) => {
+        const newDirection = sortColumn === column && sortDirection === 'asc' ? 'desc' : 'asc';
+        setSortColumn(column);
+        setSortDirection(newDirection);
+        
+        router.get(route('outpost.groups', outpostId), {
+            search: searchTerm,
+            page: currentPage,
+            per_page: itemsPerPage,
+            sort_by: column,
+            sort_dir: newDirection,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    // Remove client-side sorting and filtering
+    // The data is already sorted and filtered from the backend
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
@@ -128,11 +196,16 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
         });
     };
 
-    // Calculate totals
-    const totalSavings = filteredGroups.reduce((sum, group) => sum + group.savings_balance_after, 0);
-    const totalLoans = filteredGroups.reduce((sum, group) => sum + group.loan_balance_after, 0);
-    const totalArrears = filteredGroups.reduce((sum, group) => sum + group.arrears_after, 0);
-    const totalAccounts = filteredGroups.reduce((sum, group) => sum + group.accts_after, 0);
+    // Calculate totals (you might want to move these to backend)
+    const totalSavings = initialGroups.reduce((sum, group) => sum + group.savings_balance_after, 0);
+    const totalLoans = initialGroups.reduce((sum, group) => sum + group.loan_balance_after, 0);
+    const totalArrears = initialGroups.reduce((sum, group) => sum + group.arrears_after, 0);
+    const totalAccounts = initialGroups.reduce((sum, group) => sum + group.accts_after, 0);
+
+    // Get comment status counts (you might want to move these to backend)
+    const completedCount = initialGroups.filter(g => g.comment_status === 'completed').length;
+    const inProgressCount = initialGroups.filter(g => g.comment_status === 'in-progress').length;
+    const pendingCount = initialGroups.filter(g => g.comment_status === 'pending').length;
 
     // Get meeting frequency badge color
     const getFrequencyColor = (frequency: string) => {
@@ -167,21 +240,18 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                         label: 'Completed',
                         badgeClass: 'bg-green-100 text-green-800 hover:bg-green-100 border-green-300',
                         progressClass: 'bg-green-500',
-                        
                     };
                 case 'in-progress':
                     return {
                         label: group.remaining_comments === 1 ? 'In Progress' : `In Progress (${group.remaining_comments} left)`,
                         badgeClass: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-yellow-300',
                         progressClass: 'bg-yellow-500',
-                        
                     };
                 case 'pending':
                     return {
                         label: 'Pending',
                         badgeClass: 'bg-gray-100 text-gray-800 hover:bg-gray-100 border-gray-300',
                         progressClass: 'bg-gray-500',
-                        
                     };
                 default:
                     return {
@@ -204,11 +274,6 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                     >
                         {config.label}
                     </Badge>
-                    {config.description && (
-                        <div className="text-xs text-muted-foreground">
-                            {config.description}
-                        </div>
-                    )}
                 </div>
                 
                 {/* Progress Bar */}
@@ -232,7 +297,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
 
     return (
         <MainLayout title="Groups">
-            <div className="space-y-6 p-4  lg:p-8">
+            <div className="space-y-6 p-4 lg:p-8">
                 {/* Enhanced Header Section for md+ screens */}
                 <div className="hidden md:block">
                     <div className="mb-6">
@@ -240,7 +305,8 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                             <div>
                                 <h1 className="text-3xl font-bold tracking-tight text-foreground">Groups Listings</h1>
                                 <p className="mt-2 text-muted-foreground">
-                                    Managing {filteredGroups.length} groups for Outpost ID: {outpostId}
+                                    Managing {pagination.total} groups for Outpost ID: {outpostId}
+                                    {searchTerm && ` (${initialGroups.length} filtered)`}
                                 </p>
                             </div>
                             
@@ -249,19 +315,19 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                 <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
                                     <div className="h-2 w-2 rounded-full bg-green-500"></div>
                                     <span className="text-sm">
-                                        Completed: {filteredGroups.filter(g => g.comment_status === 'completed').length}
+                                        Completed: {completedCount}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
                                     <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
                                     <span className="text-sm">
-                                        In Progress: {filteredGroups.filter(g => g.comment_status === 'in-progress').length}
+                                        In Progress: {inProgressCount}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
                                     <div className="h-2 w-2 rounded-full bg-gray-500"></div>
                                     <span className="text-sm">
-                                        Pending: {filteredGroups.filter(g => g.comment_status === 'pending').length}
+                                        Pending: {pendingCount}
                                     </span>
                                 </div>
                             </div>
@@ -305,7 +371,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                 </div>
                                 <div>
                                     <CardDescription className="text-center">
-                                        Showing {paginatedGroups.length} of {filteredGroups.length} groups
+                                        Showing {pagination.from} to {pagination.to} of {pagination.total} groups
                                     </CardDescription>
                                 </div>
                                 <div className="flex w-full items-center gap-2 sm:w-auto">
@@ -326,7 +392,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                             <div>
                                 <CardTitle className="text-lg font-semibold">Groups Overview</CardTitle>
                                 <CardDescription>
-                                    {filteredGroups.length} groups • Sorted by {sortColumn.replace('_', ' ')} ({sortDirection})
+                                    {pagination.total} groups • Sorted by {sortColumn.replace('_', ' ')} ({sortDirection})
                                 </CardDescription>
                             </div>
                             <div className="flex items-center gap-2">
@@ -334,10 +400,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                     <span className="text-sm text-muted-foreground">Rows:</span>
                                     <Select
                                         value={itemsPerPage.toString()}
-                                        onValueChange={(value) => {
-                                            setItemsPerPage(Number(value));
-                                            setCurrentPage(1);
-                                        }}
+                                        onValueChange={(value) => handleItemsPerPageChange(Number(value))}
                                     >
                                         <SelectTrigger className="h-8 w-20">
                                             <SelectValue />
@@ -374,7 +437,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                         </TableHead>
 
                                         <TableHead
-                                            className="cursor-pointer text-xs font-medium hover:bg-muted md:text-sm md:font-semibold "
+                                            className="cursor-pointer text-xs font-medium hover:bg-muted md:text-sm md:font-semibold"
                                             onClick={() => handleSort('comment_status')}
                                         >
                                             <div className="flex items-center gap-1.5 md:gap-2">
@@ -449,12 +512,10 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {paginatedGroups.length > 0 ? (
-                                        paginatedGroups.map((group) => {
+                                    {initialGroups.length > 0 ? (
+                                        initialGroups.map((group) => {
                                             const savingsChange = group.savings_balance_after - group.savings_balance_b4;
                                             const loanChange = group.loan_balance_after - group.loan_balance_b4;
-                                            const arrearsChange = group.arrears_after - group.arrears_b4;
-                                            const accountsChange = group.accts_after - group.accts_b4;
 
                                             return (
                                                 <TableRow key={group.id} className="group hover:bg-muted/50 max-w-screen">
@@ -464,7 +525,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                                 <Users className="h-4 w-4 text-primary" />
                                                             </div>
                                                             <div>
-                                                                <div className="w-10 text-xs  md:text-sm">{group.group_name}</div>
+                                                                <div className="w-10 text-xs md:text-sm">{group.group_name}</div>
                                                                 <div className="mt-1 flex items-center gap-1">
                                                                     <Badge variant="outline" className="px-2 py-0.5 text-xs">
                                                                         {group.group_id}
@@ -577,8 +638,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                         <div className="flex w-full flex-col items-center justify-between gap-3 sm:flex-row">
                             <div className="flex items-center gap-2 text-xs text-muted-foreground md:text-sm">
                                 <span>
-                                    Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredGroups.length)} of{' '}
-                                    {filteredGroups.length} groups
+                                    Showing {pagination.from} to {pagination.to} of {pagination.total} groups
                                 </span>
                             </div>
 
@@ -587,10 +647,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                     <span className="text-sm">Rows per page</span>
                                     <Select
                                         value={itemsPerPage.toString()}
-                                        onValueChange={(value) => {
-                                            setItemsPerPage(Number(value));
-                                            setCurrentPage(1);
-                                        }}
+                                        onValueChange={(value) => handleItemsPerPageChange(Number(value))}
                                     >
                                         <SelectTrigger className="h-8 w-16">
                                             <SelectValue />
@@ -610,7 +667,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                             variant="outline"
                                             size="sm"
                                             className="h-8 w-8 p-0"
-                                            onClick={() => setCurrentPage(1)}
+                                            onClick={() => handlePageChange(1)}
                                             disabled={currentPage === 1}
                                         >
                                             <ChevronsLeft className="h-4 w-4" />
@@ -619,7 +676,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                             variant="outline"
                                             size="sm"
                                             className="h-8 w-8 p-0"
-                                            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                            onClick={() => handlePageChange(currentPage - 1)}
                                             disabled={currentPage === 1}
                                         >
                                             <ChevronLeft className="h-4 w-4" />
@@ -627,7 +684,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                     </div>
 
                                     <span className="min-w-[60px] text-center text-xs md:min-w-[80px] md:text-sm">
-                                        Page {currentPage} of {totalPages}
+                                        Page {currentPage} of {pagination.last_page}
                                     </span>
 
                                     <div className="hidden md:block">
@@ -635,8 +692,8 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                             variant="outline"
                                             size="sm"
                                             className="h-8 w-8 p-0"
-                                            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                                            disabled={currentPage === totalPages}
+                                            onClick={() => handlePageChange(currentPage + 1)}
+                                            disabled={currentPage === pagination.last_page}
                                         >
                                             <ChevronRight className="h-4 w-4" />
                                         </Button>
@@ -644,8 +701,8 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                             variant="outline"
                                             size="sm"
                                             className="h-8 w-8 p-0"
-                                            onClick={() => setCurrentPage(totalPages)}
-                                            disabled={currentPage === totalPages}
+                                            onClick={() => handlePageChange(pagination.last_page)}
+                                            disabled={currentPage === pagination.last_page}
                                         >
                                             <ChevronsRight className="h-4 w-4" />
                                         </Button>
@@ -657,7 +714,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                             variant="outline"
                                             size="sm"
                                             className="h-7 w-7 p-0"
-                                            onClick={() => setCurrentPage(1)}
+                                            onClick={() => handlePageChange(1)}
                                             disabled={currentPage === 1}
                                         >
                                             <ChevronsLeft className="h-3 w-3" />
@@ -666,7 +723,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                             variant="outline"
                                             size="sm"
                                             className="h-7 w-7 p-0"
-                                            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                            onClick={() => handlePageChange(currentPage - 1)}
                                             disabled={currentPage === 1}
                                         >
                                             <ChevronLeft className="h-3 w-3" />
@@ -675,8 +732,8 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                             variant="outline"
                                             size="sm"
                                             className="h-7 w-7 p-0"
-                                            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                                            disabled={currentPage === totalPages}
+                                            onClick={() => handlePageChange(currentPage + 1)}
+                                            disabled={currentPage === pagination.last_page}
                                         >
                                             <ChevronRight className="h-3 w-3" />
                                         </Button>
@@ -684,8 +741,8 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                             variant="outline"
                                             size="xs"
                                             className="h-7 w-7 p-0"
-                                            onClick={() => setCurrentPage(totalPages)}
-                                            disabled={currentPage === totalPages}
+                                            onClick={() => handlePageChange(pagination.last_page)}
+                                            disabled={currentPage === pagination.last_page}
                                         >
                                             <ChevronsRight className="h-3 w-3" />
                                         </Button>
