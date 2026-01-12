@@ -290,6 +290,18 @@ export default function singleGroup() {
 
     const [currentComment, setCurrentComment] = useState<Comment | undefined>(comments.length > 0 ? comments[0] : undefined);
 
+    useEffect(() => {
+
+        const savedIndex = localStorage.getItem(`group-${(props.group as any).id}`);
+
+
+        if (savedIndex) {
+            setCurrentIndex(parseInt(savedIndex));
+            setCurrentComment(comments[parseInt(savedIndex)]);
+        }
+
+    }, [])
+
     async function save() {
 
         if (!loading) {
@@ -395,6 +407,8 @@ export default function singleGroup() {
 
             setCurrentComment(comments[currentIndex + 1]);
 
+            localStorage.setItem(`group-${(props.group as any).id}`, `${currentIndex + 1}`);
+
         }
     }
 
@@ -425,6 +439,7 @@ export default function singleGroup() {
             })
 
             setCurrentComment(comments[currentIndex - 1]);
+            localStorage.setItem(`group-${(props.group as any).id}`, `${currentIndex - 1}`);
         }
 
     }
@@ -760,7 +775,10 @@ export default function singleGroup() {
             </div>
             <div className="flex flex-row justify-between p-2 h-[3rem] border-t">
                 {currentIndex == 0 ? <Button
-                    onClick={() => window.history.back()}
+                    onClick={() => {
+                        localStorage.removeItem(`group-${(props.group as any).id}`);
+                        window.history.back()
+                    }}
                 >
                     Exit
                 </Button> : (
@@ -778,12 +796,16 @@ export default function singleGroup() {
 
                                 const { success, message } = await save();
 
+
+                                localStorage.removeItem(`group-${(props.group as any).id}`);
+
                                 if (!success) {
                                     toast(message);
 
                                 } else {
                                     window.history.back();
                                 }
+
                             }}>
 
                             {
