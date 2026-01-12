@@ -234,7 +234,7 @@ export default function Welcome({ outposts }: Props) {
                                                             size="xs"
                                                             className="h-8 gap-1.5 px-2 text-xs bg-primary text-primary-foreground hover:text-primary md:size-sm md:px-3 md:text-sm"
                                                         >
-                                                            <Link href={route('outposts.groups', outpost.id)}>
+                                                            <Link href={route('outposts.groups', outpost.name)}>
                                                                 <Eye className="h-3 w-3 md:h-4 md:w-4" />
                                                                 <span className="hidden md:inline">View Details</span>
                                                                 <span className="md:hidden">View</span>

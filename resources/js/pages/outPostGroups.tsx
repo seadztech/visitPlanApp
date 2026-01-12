@@ -53,6 +53,9 @@ interface Group {
     time: string;
     created_at: string;
     updated_at: string;
+    comment_status: 'pending' | 'in-progress' | 'completed';
+    remaining_comments: number;
+    total_comments: number;
 }
 
 // Define props with groups
@@ -155,24 +158,115 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
         return days[day] || 'bg-gray-50 text-gray-700 border-gray-200';
     };
 
+    // Render comment status with badge
+    const renderCommentStatus = (group: Group) => {
+        const getStatusConfig = (status: string) => {
+            switch (status) {
+                case 'completed':
+                    return {
+                        label: 'Completed',
+                        badgeClass: 'bg-green-100 text-green-800 hover:bg-green-100 border-green-300',
+                        progressClass: 'bg-green-500',
+                        
+                    };
+                case 'in-progress':
+                    return {
+                        label: group.remaining_comments === 1 ? 'In Progress' : `In Progress (${group.remaining_comments} left)`,
+                        badgeClass: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-yellow-300',
+                        progressClass: 'bg-yellow-500',
+                        
+                    };
+                case 'pending':
+                    return {
+                        label: 'Pending',
+                        badgeClass: 'bg-gray-100 text-gray-800 hover:bg-gray-100 border-gray-300',
+                        progressClass: 'bg-gray-500',
+                        
+                    };
+                default:
+                    return {
+                        label: 'Unknown',
+                        badgeClass: 'bg-gray-100 text-gray-800 hover:bg-gray-100 border-gray-300',
+                        progressClass: 'bg-gray-500',
+                        description: ''
+                    };
+            }
+        };
+
+        const config = getStatusConfig(group.comment_status);
+        
+        return (
+            <div className="space-y-2">
+                <div className="flex flex-col gap-1">
+                    <Badge 
+                        variant="outline" 
+                        className={`px-1 py-0.5 text-xs font-medium ${config.badgeClass}`}
+                    >
+                        {config.label}
+                    </Badge>
+                    {config.description && (
+                        <div className="text-xs text-muted-foreground">
+                            {config.description}
+                        </div>
+                    )}
+                </div>
+                
+                {/* Progress Bar */}
+                {group.total_comments > 0 && (
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Progress</span>
+                            <span className="font-medium">
+                                {group.total_comments - group.remaining_comments}/{group.total_comments}
+                            </span>
+                        </div>
+                        <Progress 
+                            value={((group.total_comments - group.remaining_comments) / group.total_comments) * 100} 
+                            className="h-1.5"
+                        />
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <MainLayout title="Groups">
-            <div className="space-y-6 p-4 md:p-6 lg:p-8">
+            <div className="space-y-6 p-4  lg:p-8">
                 {/* Enhanced Header Section for md+ screens */}
                 <div className="hidden md:block">
                     <div className="mb-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h1 className="text-3xl font-bold tracking-tight text-foreground">Groups Listings for this</h1>
+                                <h1 className="text-3xl font-bold tracking-tight text-foreground">Groups Listings</h1>
                                 <p className="mt-2 text-muted-foreground">
                                     Managing {filteredGroups.length} groups for Outpost ID: {outpostId}
                                 </p>
                             </div>
-
+                            
+                            {/* Comment Status Summary */}
+                            <div className="flex gap-3">
+                                <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+                                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                    <span className="text-sm">
+                                        Completed: {filteredGroups.filter(g => g.comment_status === 'completed').length}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+                                    <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
+                                    <span className="text-sm">
+                                        In Progress: {filteredGroups.filter(g => g.comment_status === 'in-progress').length}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+                                    <div className="h-2 w-2 rounded-full bg-gray-500"></div>
+                                    <span className="text-sm">
+                                        Pending: {filteredGroups.filter(g => g.comment_status === 'pending').length}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-
 
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex-1">
@@ -203,7 +297,12 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                         <div className="md:hidden">
                             {/* Mobile header */}
                             <div className="flex flex-col justify-between gap-4 sm:items-center">
-                                <div className="text-center">Groups List</div>
+                                <div className="text-center">
+                                    <h2 className="text-lg font-semibold">Groups List</h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Outpost ID: {outpostId}
+                                    </p>
+                                </div>
                                 <div>
                                     <CardDescription className="text-center">
                                         Showing {paginatedGroups.length} of {filteredGroups.length} groups
@@ -256,7 +355,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                     </CardHeader>
 
                     <CardContent className="p-0">
-                        <div className="overflow-hidden rounded-lg border md:rounded-xl">
+                        <div className="overflow-hidden rounded-lg border md:rounded-xl max-w-screen">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
@@ -274,7 +373,75 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                             </div>
                                         </TableHead>
 
+                                        <TableHead
+                                            className="cursor-pointer text-xs font-medium hover:bg-muted md:text-sm md:font-semibold "
+                                            onClick={() => handleSort('comment_status')}
+                                        >
+                                            <div className="flex items-center gap-1.5 md:gap-2">
+                                                <span>Status</span>
+                                                {sortColumn === 'comment_status' && (
+                                                    <span className="text-[10px] md:text-xs">
+                                                        {sortDirection === 'asc' ? '↑' : '↓'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableHead>
 
+                                        <TableHead
+                                            className="hidden cursor-pointer text-xs font-medium hover:bg-muted md:table-cell md:text-sm md:font-semibold"
+                                            onClick={() => handleSort('village')}
+                                        >
+                                            <div className="flex items-center gap-1.5 md:gap-2">
+                                                <span>Village</span>
+                                                {sortColumn === 'village' && (
+                                                    <span className="text-[10px] md:text-xs">
+                                                        {sortDirection === 'asc' ? '↑' : '↓'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableHead>
+
+                                        <TableHead
+                                            className="hidden cursor-pointer text-xs font-medium hover:bg-muted md:table-cell md:text-sm md:font-semibold"
+                                            onClick={() => handleSort('meeting_day')}
+                                        >
+                                            <div className="flex items-center gap-1.5 md:gap-2">
+                                                <span>Meeting Day</span>
+                                                {sortColumn === 'meeting_day' && (
+                                                    <span className="text-[10px] md:text-xs">
+                                                        {sortDirection === 'asc' ? '↑' : '↓'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableHead>
+
+                                        <TableHead
+                                            className="hidden cursor-pointer text-xs font-medium hover:bg-muted md:table-cell md:text-sm md:font-semibold"
+                                            onClick={() => handleSort('savings_balance_after')}
+                                        >
+                                            <div className="flex items-center gap-1.5 md:gap-2">
+                                                <span>Savings Balance</span>
+                                                {sortColumn === 'savings_balance_after' && (
+                                                    <span className="text-[10px] md:text-xs">
+                                                        {sortDirection === 'asc' ? '↑' : '↓'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableHead>
+
+                                        <TableHead
+                                            className="hidden cursor-pointer text-xs font-medium hover:bg-muted md:table-cell md:text-sm md:font-semibold"
+                                            onClick={() => handleSort('loan_balance_after')}
+                                        >
+                                            <div className="flex items-center gap-1.5 md:gap-2">
+                                                <span>Loan Balance</span>
+                                                {sortColumn === 'loan_balance_after' && (
+                                                    <span className="text-[10px] md:text-xs">
+                                                        {sortDirection === 'asc' ? '↑' : '↓'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableHead>
 
                                         <TableHead className="text-right text-xs font-medium md:text-sm md:font-semibold">
                                             Actions
@@ -290,14 +457,14 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                             const accountsChange = group.accts_after - group.accts_b4;
 
                                             return (
-                                                <TableRow key={group.id} className="group hover:bg-muted/50">
+                                                <TableRow key={group.id} className="group hover:bg-muted/50 max-w-screen">
                                                     <TableCell className="text-xs md:text-sm">
                                                         <div className="flex items-center gap-2">
                                                             <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-primary/10 md:flex">
                                                                 <Users className="h-4 w-4 text-primary" />
                                                             </div>
                                                             <div>
-                                                                <div className="font-medium max-w-60">{group.group_name}</div>
+                                                                <div className="w-10 text-xs  md:text-sm">{group.group_name}</div>
                                                                 <div className="mt-1 flex items-center gap-1">
                                                                     <Badge variant="outline" className="px-2 py-0.5 text-xs">
                                                                         {group.group_id}
@@ -318,9 +485,52 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                         </div>
                                                     </TableCell>
 
+                                                    <TableCell className="text-xs md:text-sm">
+                                                        {renderCommentStatus(group)}
+                                                    </TableCell>
 
+                                                    <TableCell className="hidden md:table-cell md:text-sm">
+                                                        <div className="font-medium">{group.village}</div>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            Officer: {group.credit_officer_id}
+                                                        </div>
+                                                    </TableCell>
 
+                                                    <TableCell className="hidden md:table-cell md:text-sm">
+                                                        <div className="space-y-1">
+                                                            <Badge variant="outline" className={getDayColor(group.meeting_day)}>
+                                                                {group.meeting_day}
+                                                            </Badge>
+                                                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                                <Clock className="h-3 w-3" />
+                                                                <span>{formatTime(group.time)}</span>
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
 
+                                                    <TableCell className="hidden md:table-cell md:text-sm">
+                                                        <div className="font-medium">{formatCurrency(group.savings_balance_after)}</div>
+                                                        <div className={`flex items-center gap-1 text-xs ${savingsChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                            {savingsChange >= 0 ? (
+                                                                <TrendingUp className="h-3 w-3" />
+                                                            ) : (
+                                                                <TrendingDown className="h-3 w-3" />
+                                                            )}
+                                                            <span>{savingsChange >= 0 ? '+' : ''}{formatCurrency(savingsChange)}</span>
+                                                        </div>
+                                                    </TableCell>
+
+                                                    <TableCell className="hidden md:table-cell md:text-sm">
+                                                        <div className="font-medium">{formatCurrency(group.loan_balance_after)}</div>
+                                                        <div className={`flex items-center gap-1 text-xs ${loanChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                            {loanChange >= 0 ? (
+                                                                <TrendingUp className="h-3 w-3" />
+                                                            ) : (
+                                                                <TrendingDown className="h-3 w-3" />
+                                                            )}
+                                                            <span>{loanChange >= 0 ? '+' : ''}{formatCurrency(loanChange)}</span>
+                                                        </div>
+                                                    </TableCell>
 
                                                     <TableCell className="text-right md:py-3">
                                                         <div className="flex justify-end gap-2">
@@ -336,8 +546,6 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                                     <span className="md:hidden">View</span>
                                                                 </Link>
                                                             </Button>
-
-
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -345,7 +553,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                         })
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="h-80 py-8 text-center">
+                                            <TableCell colSpan={8} className="h-80 py-8 text-center">
                                                 <div className="flex flex-col items-center justify-center gap-3">
                                                     <div className="rounded-full bg-muted p-4">
                                                         <Users className="h-8 w-8 text-muted-foreground md:h-10 md:w-10" />
@@ -356,7 +564,6 @@ export default function OutPostGroups({ groups: initialGroups, outpostId }: Prop
                                                             {searchTerm ? 'Try adjusting your search terms' : 'Start by creating your first group'}
                                                         </p>
                                                     </div>
-
                                                 </div>
                                             </TableCell>
                                         </TableRow>

@@ -8,6 +8,7 @@ use App\Models\Group;
 use App\Models\Objective;
 use App\Models\Outpost;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 
@@ -19,21 +20,71 @@ class IndexController extends Controller
     {
         $outposts = Outpost::all();
 
+        // dd($outposts);
+
         // Pass outposts to the frontend
         return Inertia::render('Index', [
             'outposts' => $outposts
         ]);
     }
 
-    public function showOutpostGroups(Request $request, string $outpostId)
-    {
-        $groups = Group::with('outpost')->where('outpost_id', $outpostId)->get();
+public function showOutpostGroups(Request $request, string $village)
+{
 
-        return Inertia::render('OutPostGroups', [
-            'groups' => $groups,
-            'outpostId' => $outpostId
-        ]);
-    }
+    // dd($village);
+
+    $outpost = Outpost::where('name', $village)->first();
+
+    $groups = Group::with('outpost', 'comments')
+        ->where('village', $village)
+        ->get()
+        ->map(function ($group) {
+            // Get comment counts using where clause
+            $totalComments = DB::table('comments')
+                ->where('group_id', $group->group_id)
+                ->count();
+            
+            $nullComments = DB::table('comments')
+                ->where('group_id', $group->group_id)
+                ->where('comment', '')
+                ->count();
+            
+            $nonNullComments = $totalComments - $nullComments;
+            
+            // Determine status
+            if ($totalComments === 0) {
+                $commentStatus = 'pending';
+                $remainingComments = 0;
+            } elseif ($nullComments === 0 && $nonNullComments > 0) {
+                $commentStatus = 'completed';
+                $remainingComments = 0;
+            } elseif ($nullComments === 1 && $nonNullComments >= 0) {
+                $commentStatus = 'in-progress';
+                $remainingComments = 1;
+            } else {
+                $commentStatus = 'in-progress';
+                $remainingComments = $nullComments;
+            }
+            
+            // Add computed properties to the group
+            $group->comment_status = $commentStatus;
+            $group->remaining_comments = $remainingComments;
+            $group->total_comments = $totalComments;
+
+            // dd($nullComments);
+            
+            return $group;
+
+
+        });
+
+        
+
+    return Inertia::render('OutPostGroups', [
+        'groups' => $groups,
+        'outpostId' => $outpost->id,
+    ]);
+}
 
     public function showSingleGroup(string $groupId)
     {
