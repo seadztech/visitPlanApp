@@ -1,34 +1,18 @@
 import { PageProps } from '@inertiajs/core';
 import { router } from '@inertiajs/react'; // Add this import
-import {
-    Building2,
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
-    Eye,
-    Plus,
-    Search,
-    Calendar,
-    Clock,
-    Users,
-    TrendingUp,
-    TrendingDown,
-    Banknote,
-    Wallet
-} from 'lucide-react';
-import { useState, useEffect } from 'react'; // Add useEffect
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, Eye, Search, TrendingDown, TrendingUp, Users } from 'lucide-react';
+import { useEffect, useState } from 'react'; // Add useEffect
 import MainLayout from './Layouts/MainLayout';
 
 // ShadCN Components
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Link } from '@inertiajs/react';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Link } from '@inertiajs/react';
 import { debounce } from 'lodash'; // Add this import
 
 // Define the Group type
@@ -80,12 +64,7 @@ interface Props extends PageProps {
     };
 }
 
-export default function OutPostGroups({ 
-    groups: initialGroups, 
-    outpostId, 
-    pagination, 
-    filters 
-}: Props) {
+export default function OutPostGroups({ groups: initialGroups, outpostId, pagination, filters }: Props) {
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [currentPage, setCurrentPage] = useState(pagination.current_page);
     const [itemsPerPage, setItemsPerPage] = useState(pagination.per_page);
@@ -94,17 +73,21 @@ export default function OutPostGroups({
 
     // Debounced search function
     const debouncedSearch = debounce((search: string) => {
-        router.get(route('outpost.groups', outpostId), {
-            search: search,
-            page: 1, // Reset to first page on search
-            per_page: itemsPerPage,
-            sort_by: sortColumn,
-            sort_dir: sortDirection,
-        }, {
-            preserveState: true,
-            replace: true,
-            preserveScroll: true,
-        });
+        router.get(
+            route('outpost.groups', outpostId),
+            {
+                search: search,
+                page: 1, // Reset to first page on search
+                per_page: itemsPerPage,
+                sort_by: sortColumn,
+                sort_dir: sortDirection,
+            },
+            {
+                preserveState: true,
+                replace: true,
+                preserveScroll: true,
+            },
+        );
     }, 500);
 
     // Handle search change
@@ -112,7 +95,7 @@ export default function OutPostGroups({
         if (searchTerm !== filters.search) {
             debouncedSearch(searchTerm);
         }
-        
+
         // Cleanup
         return () => {
             debouncedSearch.cancel();
@@ -122,32 +105,40 @@ export default function OutPostGroups({
     // Handle pagination change
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
-        router.get(route('outpost.groups', outpostId), {
-            search: searchTerm,
-            page: page,
-            per_page: itemsPerPage,
-            sort_by: sortColumn,
-            sort_dir: sortDirection,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get(
+            route('outpost.groups', outpostId),
+            {
+                search: searchTerm,
+                page: page,
+                per_page: itemsPerPage,
+                sort_by: sortColumn,
+                sort_dir: sortDirection,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     // Handle items per page change
     const handleItemsPerPageChange = (value: number) => {
         setItemsPerPage(value);
         setCurrentPage(1); // Reset to first page
-        router.get(route('outpost.groups', outpostId), {
-            search: searchTerm,
-            page: 1,
-            per_page: value,
-            sort_by: sortColumn,
-            sort_dir: sortDirection,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get(
+            route('outpost.groups', outpostId),
+            {
+                search: searchTerm,
+                page: 1,
+                per_page: value,
+                sort_by: sortColumn,
+                sort_dir: sortDirection,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     // Handle sort
@@ -155,17 +146,21 @@ export default function OutPostGroups({
         const newDirection = sortColumn === column && sortDirection === 'asc' ? 'desc' : 'asc';
         setSortColumn(column);
         setSortDirection(newDirection);
-        
-        router.get(route('outpost.groups', outpostId), {
-            search: searchTerm,
-            page: currentPage,
-            per_page: itemsPerPage,
-            sort_by: column,
-            sort_dir: newDirection,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+
+        router.get(
+            route('outpost.groups', outpostId),
+            {
+                search: searchTerm,
+                page: currentPage,
+                per_page: itemsPerPage,
+                sort_by: column,
+                sort_dir: newDirection,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     // Remove client-side sorting and filtering
@@ -176,7 +171,7 @@ export default function OutPostGroups({
             style: 'currency',
             currency: 'KES',
             minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+            maximumFractionDigits: 2,
         }).format(amount);
     };
 
@@ -192,7 +187,7 @@ export default function OutPostGroups({
         return new Date(`1970-01-01T${timeString}`).toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
-            hour12: true
+            hour12: true,
         });
     };
 
@@ -203,30 +198,34 @@ export default function OutPostGroups({
     const totalAccounts = initialGroups.reduce((sum, group) => sum + group.accts_after, 0);
 
     // Get comment status counts (you might want to move these to backend)
-    const completedCount = initialGroups.filter(g => g.comment_status === 'completed').length;
-    const inProgressCount = initialGroups.filter(g => g.comment_status === 'in-progress').length;
-    const pendingCount = initialGroups.filter(g => g.comment_status === 'pending').length;
+    const completedCount = initialGroups.filter((g) => g.comment_status === 'completed').length;
+    const inProgressCount = initialGroups.filter((g) => g.comment_status === 'in-progress').length;
+    const pendingCount = initialGroups.filter((g) => g.comment_status === 'pending').length;
 
     // Get meeting frequency badge color
     const getFrequencyColor = (frequency: string) => {
         switch (frequency) {
-            case 'W': return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
-            case 'M': return 'bg-green-100 text-green-800 hover:bg-green-100';
-            case 'F': return 'bg-purple-100 text-purple-800 hover:bg-purple-100';
-            default: return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
+            case 'W':
+                return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
+            case 'M':
+                return 'bg-green-100 text-green-800 hover:bg-green-100';
+            case 'F':
+                return 'bg-purple-100 text-purple-800 hover:bg-purple-100';
+            default:
+                return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
         }
     };
 
     // Get meeting day badge color
     const getDayColor = (day: string) => {
         const days: Record<string, string> = {
-            'Monday': 'bg-blue-50 text-blue-700 border-blue-200',
-            'Tuesday': 'bg-green-50 text-green-700 border-green-200',
-            'Wednesday': 'bg-yellow-50 text-yellow-700 border-yellow-200',
-            'Thursday': 'bg-purple-50 text-purple-700 border-purple-200',
-            'Friday': 'bg-orange-50 text-orange-700 border-orange-200',
-            'Saturday': 'bg-red-50 text-red-700 border-red-200',
-            'Sunday': 'bg-indigo-50 text-indigo-700 border-indigo-200'
+            Monday: 'bg-blue-50 text-blue-700 border-blue-200',
+            Tuesday: 'bg-green-50 text-green-700 border-green-200',
+            Wednesday: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+            Thursday: 'bg-purple-50 text-purple-700 border-purple-200',
+            Friday: 'bg-orange-50 text-orange-700 border-orange-200',
+            Saturday: 'bg-red-50 text-red-700 border-red-200',
+            Sunday: 'bg-indigo-50 text-indigo-700 border-indigo-200',
         };
         return days[day] || 'bg-gray-50 text-gray-700 border-gray-200';
     };
@@ -258,24 +257,21 @@ export default function OutPostGroups({
                         label: 'Unknown',
                         badgeClass: 'bg-gray-100 text-gray-800 hover:bg-gray-100 border-gray-300',
                         progressClass: 'bg-gray-500',
-                        description: ''
+                        description: '',
                     };
             }
         };
 
         const config = getStatusConfig(group.comment_status);
-        
+
         return (
             <div className="space-y-2">
                 <div className="flex flex-col gap-1">
-                    <Badge 
-                        variant="outline" 
-                        className={`px-1 py-0.5 text-xs font-medium ${config.badgeClass}`}
-                    >
+                    <Badge variant="outline" className={`px-1 py-0.5 text-xs font-medium ${config.badgeClass}`}>
                         {config.label}
                     </Badge>
                 </div>
-                
+
                 {/* Progress Bar */}
                 {group.total_comments > 0 && (
                     <div className="space-y-1">
@@ -285,10 +281,7 @@ export default function OutPostGroups({
                                 {group.total_comments - group.remaining_comments}/{group.total_comments}
                             </span>
                         </div>
-                        <Progress 
-                            value={((group.total_comments - group.remaining_comments) / group.total_comments) * 100} 
-                            className="h-1.5"
-                        />
+                        <Progress value={((group.total_comments - group.remaining_comments) / group.total_comments) * 100} className="h-1.5" />
                     </div>
                 )}
             </div>
@@ -309,26 +302,20 @@ export default function OutPostGroups({
                                     {searchTerm && ` (${initialGroups.length} filtered)`}
                                 </p>
                             </div>
-                            
+
                             {/* Comment Status Summary */}
                             <div className="flex gap-3">
                                 <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
                                     <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                                    <span className="text-sm">
-                                        Completed: {completedCount}
-                                    </span>
+                                    <span className="text-sm">Completed: {completedCount}</span>
                                 </div>
                                 <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
                                     <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
-                                    <span className="text-sm">
-                                        In Progress: {inProgressCount}
-                                    </span>
+                                    <span className="text-sm">In Progress: {inProgressCount}</span>
                                 </div>
                                 <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
                                     <div className="h-2 w-2 rounded-full bg-gray-500"></div>
-                                    <span className="text-sm">
-                                        Pending: {pendingCount}
-                                    </span>
+                                    <span className="text-sm">Pending: {pendingCount}</span>
                                 </div>
                             </div>
                         </div>
@@ -365,9 +352,7 @@ export default function OutPostGroups({
                             <div className="flex flex-col justify-between gap-4 sm:items-center">
                                 <div className="text-center">
                                     <h2 className="text-lg font-semibold">Groups List</h2>
-                                    <p className="text-sm text-muted-foreground">
-                                        Outpost ID: {outpostId}
-                                    </p>
+                                    <p className="text-sm text-muted-foreground">Outpost ID: {outpostId}</p>
                                 </div>
                                 <div>
                                     <CardDescription className="text-center">
@@ -398,10 +383,7 @@ export default function OutPostGroups({
                             <div className="flex items-center gap-2">
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-sm text-muted-foreground">Rows:</span>
-                                    <Select
-                                        value={itemsPerPage.toString()}
-                                        onValueChange={(value) => handleItemsPerPageChange(Number(value))}
-                                    >
+                                    <Select value={itemsPerPage.toString()} onValueChange={(value) => handleItemsPerPageChange(Number(value))}>
                                         <SelectTrigger className="h-8 w-20">
                                             <SelectValue />
                                         </SelectTrigger>
@@ -418,7 +400,7 @@ export default function OutPostGroups({
                     </CardHeader>
 
                     <CardContent className="p-0">
-                        <div className="overflow-hidden rounded-lg border md:rounded-xl max-w-screen">
+                        <div className="max-w-screen overflow-hidden rounded-lg border md:rounded-xl">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
@@ -429,9 +411,7 @@ export default function OutPostGroups({
                                             <div className="flex items-center gap-1.5 md:gap-2">
                                                 <span>Group Name</span>
                                                 {sortColumn === 'group_name' && (
-                                                    <span className="text-[10px] md:text-xs">
-                                                        {sortDirection === 'asc' ? '↑' : '↓'}
-                                                    </span>
+                                                    <span className="text-[10px] md:text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                                                 )}
                                             </div>
                                         </TableHead>
@@ -443,9 +423,7 @@ export default function OutPostGroups({
                                             <div className="flex items-center gap-1.5 md:gap-2">
                                                 <span>Status</span>
                                                 {sortColumn === 'comment_status' && (
-                                                    <span className="text-[10px] md:text-xs">
-                                                        {sortDirection === 'asc' ? '↑' : '↓'}
-                                                    </span>
+                                                    <span className="text-[10px] md:text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                                                 )}
                                             </div>
                                         </TableHead>
@@ -457,9 +435,7 @@ export default function OutPostGroups({
                                             <div className="flex items-center gap-1.5 md:gap-2">
                                                 <span>Village</span>
                                                 {sortColumn === 'village' && (
-                                                    <span className="text-[10px] md:text-xs">
-                                                        {sortDirection === 'asc' ? '↑' : '↓'}
-                                                    </span>
+                                                    <span className="text-[10px] md:text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                                                 )}
                                             </div>
                                         </TableHead>
@@ -471,9 +447,7 @@ export default function OutPostGroups({
                                             <div className="flex items-center gap-1.5 md:gap-2">
                                                 <span>Meeting Day</span>
                                                 {sortColumn === 'meeting_day' && (
-                                                    <span className="text-[10px] md:text-xs">
-                                                        {sortDirection === 'asc' ? '↑' : '↓'}
-                                                    </span>
+                                                    <span className="text-[10px] md:text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                                                 )}
                                             </div>
                                         </TableHead>
@@ -485,9 +459,7 @@ export default function OutPostGroups({
                                             <div className="flex items-center gap-1.5 md:gap-2">
                                                 <span>Savings Balance</span>
                                                 {sortColumn === 'savings_balance_after' && (
-                                                    <span className="text-[10px] md:text-xs">
-                                                        {sortDirection === 'asc' ? '↑' : '↓'}
-                                                    </span>
+                                                    <span className="text-[10px] md:text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                                                 )}
                                             </div>
                                         </TableHead>
@@ -499,14 +471,12 @@ export default function OutPostGroups({
                                             <div className="flex items-center gap-1.5 md:gap-2">
                                                 <span>Loan Balance</span>
                                                 {sortColumn === 'loan_balance_after' && (
-                                                    <span className="text-[10px] md:text-xs">
-                                                        {sortDirection === 'asc' ? '↑' : '↓'}
-                                                    </span>
+                                                    <span className="text-[10px] md:text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                                                 )}
                                             </div>
                                         </TableHead>
 
-                                        <TableHead className="text-right text-xs font-medium md:text-sm md:font-semibold">
+                                        <TableHead  className="hidden cursor-pointer text-xs font-medium hover:bg-muted md:table-cell md:text-sm md:font-semibold">
                                             Actions
                                         </TableHead>
                                     </TableRow>
@@ -518,14 +488,16 @@ export default function OutPostGroups({
                                             const loanChange = group.loan_balance_after - group.loan_balance_b4;
 
                                             return (
-                                                <TableRow key={group.id} className="group hover:bg-muted/50 max-w-screen">
+                                                <TableRow  key={group.id} className="group max-w-screen hover:bg-muted/50 border border-primary md:border-0">
                                                     <TableCell className="text-xs md:text-sm">
                                                         <div className="flex items-center gap-2">
                                                             <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-primary/10 md:flex">
                                                                 <Users className="h-4 w-4 text-primary" />
                                                             </div>
                                                             <div>
-                                                                <div className="w-10 text-xs md:text-sm">{group.group_name}</div>
+                                                                <div className="max-w-[200px] overflow-hidden text-xs text-ellipsis whitespace-nowrap md:text-sm">
+                                                                    {group.group_name}
+                                                                </div>
                                                                 <div className="mt-1 flex items-center gap-1">
                                                                     <Badge variant="outline" className="px-2 py-0.5 text-xs">
                                                                         {group.group_id}
@@ -534,9 +506,13 @@ export default function OutPostGroups({
                                                                         variant="outline"
                                                                         className={`px-2 py-0.5 text-xs ${getFrequencyColor(group.frequency)}`}
                                                                     >
-                                                                        {group.frequency === 'W' ? 'Weekly' :
-                                                                            group.frequency === 'M' ? 'Monthly' :
-                                                                                group.frequency === 'F' ? 'Fortnightly' : group.frequency}
+                                                                        {group.frequency === 'W'
+                                                                            ? 'Weekly'
+                                                                            : group.frequency === 'M'
+                                                                              ? 'Monthly'
+                                                                              : group.frequency === 'F'
+                                                                                ? 'Fortnightly'
+                                                                                : group.frequency}
                                                                     </Badge>
                                                                 </div>
                                                                 <div className="mt-1 text-xs text-muted-foreground md:hidden">
@@ -547,14 +523,27 @@ export default function OutPostGroups({
                                                     </TableCell>
 
                                                     <TableCell className="text-xs md:text-sm">
-                                                        {renderCommentStatus(group)}
+                                                        <div>{renderCommentStatus(group)}</div>
+                                                        <div className="my-1 md:hidden">
+                                                            <Button
+                                                                asChild
+                                                                variant="default"
+                                                                size="xs"
+                                                                className="md:size-sm h-8 gap-1.5 px-2 text-xs hover:bg-primary/10 hover:text-primary md:px-3 md:text-sm"
+                                                            >
+                                                                <Link href={route('groups.show', group.id)}>
+                                                                    <Eye className="h-3 w-3 md:h-4 md:w-4" />
+                                                                    <span className="hidden md:inline">View Details</span>
+                                                                    <span className="md:hidden">View</span>
+                                                                </Link>
+                                                            </Button>
+                                                        </div>
+
                                                     </TableCell>
 
                                                     <TableCell className="hidden md:table-cell md:text-sm">
                                                         <div className="font-medium">{group.village}</div>
-                                                        <div className="text-xs text-muted-foreground">
-                                                            Officer: {group.credit_officer_id}
-                                                        </div>
+                                                        <div className="text-xs text-muted-foreground">Officer: {group.credit_officer_id}</div>
                                                     </TableCell>
 
                                                     <TableCell className="hidden md:table-cell md:text-sm">
@@ -571,35 +560,44 @@ export default function OutPostGroups({
 
                                                     <TableCell className="hidden md:table-cell md:text-sm">
                                                         <div className="font-medium">{formatCurrency(group.savings_balance_after)}</div>
-                                                        <div className={`flex items-center gap-1 text-xs ${savingsChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                        <div
+                                                            className={`flex items-center gap-1 text-xs ${savingsChange >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                                        >
                                                             {savingsChange >= 0 ? (
                                                                 <TrendingUp className="h-3 w-3" />
                                                             ) : (
                                                                 <TrendingDown className="h-3 w-3" />
                                                             )}
-                                                            <span>{savingsChange >= 0 ? '+' : ''}{formatCurrency(savingsChange)}</span>
+                                                            <span>
+                                                                {savingsChange >= 0 ? '+' : ''}
+                                                                {formatCurrency(savingsChange)}
+                                                            </span>
                                                         </div>
                                                     </TableCell>
 
                                                     <TableCell className="hidden md:table-cell md:text-sm">
                                                         <div className="font-medium">{formatCurrency(group.loan_balance_after)}</div>
-                                                        <div className={`flex items-center gap-1 text-xs ${loanChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                        <div
+                                                            className={`flex items-center gap-1 text-xs ${loanChange >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                                        >
                                                             {loanChange >= 0 ? (
                                                                 <TrendingUp className="h-3 w-3" />
                                                             ) : (
                                                                 <TrendingDown className="h-3 w-3" />
                                                             )}
-                                                            <span>{loanChange >= 0 ? '+' : ''}{formatCurrency(loanChange)}</span>
+                                                            <span>
+                                                                {loanChange >= 0 ? '+' : ''}
+                                                                {formatCurrency(loanChange)}
+                                                            </span>
                                                         </div>
                                                     </TableCell>
-
-                                                    <TableCell className="text-right md:py-3">
-                                                        <div className="flex justify-end gap-2">
+                                                    <TableCell className="hidden md:table-cell md:text-sm">
+                                                        <div className="my-1 hidden md:block">
                                                             <Button
                                                                 asChild
                                                                 variant="default"
                                                                 size="xs"
-                                                                className="h-8 gap-1.5 px-2 text-xs hover:bg-primary/10 hover:text-primary md:size-sm md:px-3 md:text-sm"
+                                                                className="md:size-sm h-8 gap-1.5 px-2 text-xs hover:bg-primary/10 hover:text-primary md:px-3 md:text-sm"
                                                             >
                                                                 <Link href={route('groups.show', group.id)}>
                                                                     <Eye className="h-3 w-3 md:h-4 md:w-4" />
@@ -645,10 +643,7 @@ export default function OutPostGroups({
                             <div className="flex flex-col items-center gap-3 sm:flex-row md:gap-6">
                                 <div className="hidden items-center gap-1.5 md:flex">
                                     <span className="text-sm">Rows per page</span>
-                                    <Select
-                                        value={itemsPerPage.toString()}
-                                        onValueChange={(value) => handleItemsPerPageChange(Number(value))}
-                                    >
+                                    <Select value={itemsPerPage.toString()} onValueChange={(value) => handleItemsPerPageChange(Number(value))}>
                                         <SelectTrigger className="h-8 w-16">
                                             <SelectValue />
                                         </SelectTrigger>
