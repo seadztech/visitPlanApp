@@ -1,15 +1,15 @@
 import { PageProps } from '@inertiajs/core';
-import { Building2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Plus, Search } from 'lucide-react';
+import { Building2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Search } from 'lucide-react';
 import { useState } from 'react';
 import MainLayout from './Layouts/MainLayout';
 
 // ShadCN Components
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link } from '@inertiajs/react';
 
 // Define the Outpost type
@@ -19,6 +19,19 @@ interface Outpost {
     name: string;
     created_at: string;
     updated_at: string;
+    status: string;
+    group_count: number;
+    pending_count?: number;
+    in_progress_count?: number;
+    completed_count?: number;
+    groups?: Group[];
+}
+
+interface Group {
+    id: number;
+    village: string;
+    status: 'pending' | 'in-progress' | 'completed';
+    group_name: string;
 }
 
 // Define props with outposts
@@ -62,8 +75,6 @@ export default function Welcome({ outposts }: Props) {
         }
     };
 
-
-
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',
@@ -94,7 +105,6 @@ export default function Welcome({ outposts }: Props) {
                                 />
                             </div>
                         </div>
-
                     </div>
                 </div>
 
@@ -157,7 +167,28 @@ export default function Welcome({ outposts }: Props) {
                     </CardHeader>
 
                     <CardContent className="p-0">
-                        <div className="overflow-hidden rounded-lg border md:rounded-xl">
+                        <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow">
+                            <h4 className="mb-3 text-sm font-semibold text-gray-700">Key:</h4>
+
+                            <div className="flex items-center justify-between space-y-2 text-sm">
+                                <div className="flex items-center gap-3">
+                                    <span className="h-3 w-3 rounded-full bg-green-500"></span>
+                                    <span className="text-gray-700">Completed</span>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <span className="h-3 w-3 rounded-full bg-blue-500"></span>
+                                    <span className="text-gray-700">In Progress</span>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <span className="h-3 w-3 rounded-full bg-yellow-500"></span>
+                                    <span className="text-gray-700">Pending</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className=" rounded-lg border md:rounded-xl max-w-screen">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent">
@@ -168,9 +199,7 @@ export default function Welcome({ outposts }: Props) {
                                             <div className="flex items-center gap-1.5 md:gap-2">
                                                 <span>Outpost Name</span>
                                                 {sortColumn === 'name' && (
-                                                    <span className="text-[10px] md:text-xs">
-                                                        {sortDirection === 'asc' ? '↑' : '↓'}
-                                                    </span>
+                                                    <span className="text-[10px] md:text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                                                 )}
                                             </div>
                                         </TableHead>
@@ -179,21 +208,21 @@ export default function Welcome({ outposts }: Props) {
                                             onClick={() => handleSort('branch_code')}
                                         >
                                             <div className="flex items-center gap-1.5 md:gap-2">
-                                                <span>Branch Code</span>
+                                                <span>Code</span>
                                                 {sortColumn === 'branch_code' && (
-                                                    <span className="text-[10px] md:text-xs">
-                                                        {sortDirection === 'asc' ? '↑' : '↓'}
-                                                    </span>
+                                                    <span className="text-[10px] md:text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                                                 )}
                                             </div>
                                         </TableHead>
+
+                                        <TableHead className="text-xs font-medium md:text-sm md:font-semibold">Status</TableHead>
                                         <TableHead className="hidden text-xs font-medium md:table-cell md:text-sm md:font-semibold">
-                                            Created
+                                            Progress
                                         </TableHead>
                                         <TableHead className="hidden text-xs font-medium md:table-cell md:text-sm md:font-semibold">
                                             Updated
                                         </TableHead>
-                                        <TableHead className="text-right text-xs font-medium md:text-sm md:font-semibold">
+                                        <TableHead className="hidden text-right text-xs font-medium md:block md:text-sm md:font-semibold">
                                             Actions
                                         </TableHead>
                                     </TableRow>
@@ -201,7 +230,7 @@ export default function Welcome({ outposts }: Props) {
                                 <TableBody>
                                     {paginatedOutposts.length > 0 ? (
                                         paginatedOutposts.map((outpost) => (
-                                            <TableRow key={outpost.id} className="group hover:bg-muted/50">
+                                            <TableRow key={outpost.id} className="group border hover:bg-muted/50">
                                                 <TableCell className="text-xs md:text-sm">
                                                     <div className="flex items-center gap-2">
                                                         <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-primary/10 md:flex">
@@ -209,8 +238,11 @@ export default function Welcome({ outposts }: Props) {
                                                         </div>
                                                         <div>
                                                             <span className="font-medium">{outpost.name}</span>
-                                                            <div className="mt-1 text-xs text-muted-foreground md:hidden">
-                                                                Created: {formatDate(outpost.created_at)}
+                                                            <div className="mt-1 flex items-center gap-2 md:hidden">
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {formatDate(outpost.created_at)}
+                                                                </span>
+                                                                <span className="text-xs font-medium">• {outpost.group_count} groups</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -220,19 +252,132 @@ export default function Welcome({ outposts }: Props) {
                                                         {outpost.branch_code}
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell className="hidden text-xs md:table-cell md:text-sm">
-                                                    {formatDate(outpost.created_at)}
+
+                                                {/* Status Column */}
+                                                <TableCell className="py-3">
+                                                    <div className="flex flex-col gap-1">
+                                                        {/* Main Status Badge */}
+                                                        <Badge
+                                                            className={`w-fit px-2 py-1 text-xs font-medium md:text-sm ${
+                                                                outpost.status === 'completed'
+                                                                    ? 'border-green-200 bg-green-100 text-green-800 hover:bg-green-200'
+                                                                    : outpost.status === 'in-progress'
+                                                                      ? 'border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200'
+                                                                      : outpost.status === 'pending'
+                                                                        ? 'border-yellow-200 bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                                                        : outpost.status === 'no-groups'
+                                                                          ? 'border-gray-200 bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                                                          : 'border-purple-200 bg-purple-100 text-purple-800 hover:bg-purple-200'
+                                                            } `}
+                                                        >
+                                                            {outpost.status === 'no-groups'
+                                                                ? 'No Groups'
+                                                                : outpost.status === 'mixed'
+                                                                  ? 'Mixed Status'
+                                                                  : outpost.status === 'in-progress'
+                                                                    ? 'In Progress'
+                                                                    : outpost.status.charAt(0).toUpperCase() + outpost.status.slice(1)}
+                                                        </Badge>
+
+                                                        {/* Mobile - Show progress summary */}
+                                                        <div className="md:hidden">
+                                                            <div className="mt-1 flex items-center justify-between">
+                                                                <div className="flex items-center gap-2">
+                                                                    {outpost.group_count > 0 && (
+                                                                        <>
+                                                                            <div className="flex items-center gap-1">
+                                                                                <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                                                                <span className="text-xs">{outpost.completed_count || 0}</span>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-1">
+                                                                                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                                                                                <span className="text-xs">{outpost.in_progress_count || 0}</span>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-1">
+                                                                                <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
+                                                                                <span className="text-xs">{outpost.pending_count || 0}</span>
+                                                                            </div>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Progress percentage for mobile */}
+                                                                {outpost.group_count > 0 && (
+                                                                    <div className="mx-2 text-xs font-medium text-primary">
+                                                                        {Math.round((outpost.completed_count / outpost.group_count) * 100)}%
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="my-2 flex gap-2">
+                                                                <Button
+                                                                    asChild
+                                                                    variant="ghost"
+                                                                    size="xs"
+                                                                    className="md:size-sm mx-auto h-8 w-[80%] gap-1.5 bg-primary/90 px-2 text-xs text-primary-foreground hover:text-primary md:px-3 md:text-sm"
+                                                                >
+                                                                    <Link href={route('outposts.groups', outpost.name)}>
+                                                                        <Eye className="h-3 w-3 md:h-4 md:w-4" />
+                                                                        <span className="hidden md:inline">View Details</span>
+                                                                        <span className="md:hidden">View</span>
+                                                                    </Link>
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </TableCell>
+
+                                                {/* Desktop Progress Column */}
+                                                <TableCell className="hidden border md:table-cell">
+                                                    <div className="space-y-2">
+                                                        {/* Progress bar */}
+                                                        <div className="h-2 w-full rounded-full bg-gray-200">
+                                                            {outpost.group_count > 0 && (
+                                                                <div
+                                                                    className="h-full rounded-full bg-green-500"
+                                                                    style={{ width: `${(outpost.completed_count / outpost.group_count) * 100}%` }}
+                                                                ></div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Status counts */}
+                                                        <div className="flex items-center justify-between text-xs">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="flex items-center gap-1">
+                                                                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                                                    <span className="text-gray-600">Completed: {outpost.completed_count || 0}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                                                                    <span className="text-gray-600">
+                                                                        In Progress: {outpost.in_progress_count || 0}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
+                                                                    <span className="text-gray-600">Pending: {outpost.pending_count || 0}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {outpost.group_count > 0 && (
+                                                                <div className="font-medium">
+                                                                    {Math.round((outpost.completed_count / outpost.group_count) * 100)}% complete
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+
                                                 <TableCell className="hidden text-xs md:table-cell md:text-sm">
                                                     {formatDate(outpost.updated_at)}
                                                 </TableCell>
+
                                                 <TableCell className="text-right md:py-3">
-                                                    <div className="flex justify-end gap-2">
+                                                    <div className="hidden justify-end gap-2 md:block">
                                                         <Button
                                                             asChild
                                                             variant="ghost"
                                                             size="xs"
-                                                            className="h-8 gap-1.5 px-2 text-xs bg-primary text-primary-foreground hover:text-primary md:size-sm md:px-3 md:text-sm"
+                                                            className="md:size-sm h-8 gap-1.5 bg-primary px-2 text-xs text-primary-foreground hover:text-primary md:px-3 md:text-sm"
                                                         >
                                                             <Link href={route('outposts.groups', outpost.name)}>
                                                                 <Eye className="h-3 w-3 md:h-4 md:w-4" />
@@ -240,14 +385,13 @@ export default function Welcome({ outposts }: Props) {
                                                                 <span className="md:hidden">View</span>
                                                             </Link>
                                                         </Button>
-
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="h-80 py-8 text-center">
+                                            <TableCell colSpan={6} className="h-80 py-8 text-center">
                                                 <div className="flex flex-col items-center justify-center gap-3">
                                                     <div className="rounded-full bg-muted p-4">
                                                         <Building2 className="h-8 w-8 text-muted-foreground md:h-10 md:w-10" />
@@ -258,7 +402,6 @@ export default function Welcome({ outposts }: Props) {
                                                             {searchTerm ? 'Try adjusting your search terms' : 'Start by creating your first outpost'}
                                                         </p>
                                                     </div>
-
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -390,8 +533,6 @@ export default function Welcome({ outposts }: Props) {
                         </div>
                     </CardFooter>
                 </Card>
-
-
             </div>
         </MainLayout>
     );

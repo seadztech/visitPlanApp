@@ -1,7 +1,7 @@
 import { PageProps } from '@inertiajs/core';
-import { router } from '@inertiajs/react'; // Add this import
+import { router } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, Eye, Search, TrendingDown, TrendingUp, Users } from 'lucide-react';
-import { useEffect, useState } from 'react'; // Add useEffect
+import { useEffect, useState } from 'react';
 import MainLayout from './Layouts/MainLayout';
 
 // ShadCN Components
@@ -13,7 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link } from '@inertiajs/react';
-import { debounce } from 'lodash'; // Add this import
+import { debounce } from 'lodash';
 
 // Define the Group type
 interface Group {
@@ -163,9 +163,6 @@ export default function OutPostGroups({ groups: initialGroups, outpostId, pagina
         );
     };
 
-    // Remove client-side sorting and filtering
-    // The data is already sorted and filtered from the backend
-
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -191,13 +188,13 @@ export default function OutPostGroups({ groups: initialGroups, outpostId, pagina
         });
     };
 
-    // Calculate totals (you might want to move these to backend)
+    // Calculate totals
     const totalSavings = initialGroups.reduce((sum, group) => sum + group.savings_balance_after, 0);
     const totalLoans = initialGroups.reduce((sum, group) => sum + group.loan_balance_after, 0);
     const totalArrears = initialGroups.reduce((sum, group) => sum + group.arrears_after, 0);
     const totalAccounts = initialGroups.reduce((sum, group) => sum + group.accts_after, 0);
 
-    // Get comment status counts (you might want to move these to backend)
+    // Get comment status counts
     const completedCount = initialGroups.filter((g) => g.comment_status === 'completed').length;
     const inProgressCount = initialGroups.filter((g) => g.comment_status === 'in-progress').length;
     const pendingCount = initialGroups.filter((g) => g.comment_status === 'pending').length;
@@ -230,7 +227,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId, pagina
         return days[day] || 'bg-gray-50 text-gray-700 border-gray-200';
     };
 
-    // Render comment status with badge
+    // Render comment status with badge - UPDATED TO MATCH PROVIDED COLORING
     const renderCommentStatus = (group: Group) => {
         const getStatusConfig = (status: string) => {
             switch (status) {
@@ -238,26 +235,25 @@ export default function OutPostGroups({ groups: initialGroups, outpostId, pagina
                     return {
                         label: 'Completed',
                         badgeClass: 'bg-green-100 text-green-800 hover:bg-green-100 border-green-300',
-                        progressClass: 'bg-green-500',
+                        progressClass: 'bg-green-500', // Green for completed
                     };
                 case 'in-progress':
                     return {
                         label: group.remaining_comments === 1 ? 'In Progress' : `In Progress (${group.remaining_comments} left)`,
-                        badgeClass: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-yellow-300',
-                        progressClass: 'bg-yellow-500',
+                        badgeClass: 'bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-300', // Blue for in-progress
+                        progressClass: 'bg-blue-500', // Blue for in-progress
                     };
                 case 'pending':
                     return {
                         label: 'Pending',
-                        badgeClass: 'bg-gray-100 text-gray-800 hover:bg-gray-100 border-gray-300',
-                        progressClass: 'bg-gray-500',
+                        badgeClass: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-yellow-300', // Yellow for pending
+                        progressClass: 'bg-yellow-500', // Yellow for pending
                     };
                 default:
                     return {
                         label: 'Unknown',
                         badgeClass: 'bg-gray-100 text-gray-800 hover:bg-gray-100 border-gray-300',
                         progressClass: 'bg-gray-500',
-                        description: '',
                     };
             }
         };
@@ -303,18 +299,18 @@ export default function OutPostGroups({ groups: initialGroups, outpostId, pagina
                                 </p>
                             </div>
 
-                            {/* Comment Status Summary */}
+                            {/* Comment Status Summary - UPDATED TO MATCH PROVIDED COLORING */}
                             <div className="flex gap-3">
                                 <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
                                     <div className="h-2 w-2 rounded-full bg-green-500"></div>
                                     <span className="text-sm">Completed: {completedCount}</span>
                                 </div>
                                 <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
-                                    <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
+                                    <div className="h-2 w-2 rounded-full bg-blue-500"></div> {/* Blue for in-progress */}
                                     <span className="text-sm">In Progress: {inProgressCount}</span>
                                 </div>
                                 <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
-                                    <div className="h-2 w-2 rounded-full bg-gray-500"></div>
+                                    <div className="h-2 w-2 rounded-full bg-yellow-500"></div> {/* Yellow for pending */}
                                     <span className="text-sm">Pending: {pendingCount}</span>
                                 </div>
                             </div>
@@ -476,7 +472,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId, pagina
                                             </div>
                                         </TableHead>
 
-                                        <TableHead  className="hidden cursor-pointer text-xs font-medium hover:bg-muted md:table-cell md:text-sm md:font-semibold">
+                                        <TableHead className="hidden cursor-pointer text-xs font-medium hover:bg-muted md:table-cell md:text-sm md:font-semibold">
                                             Actions
                                         </TableHead>
                                     </TableRow>
@@ -488,7 +484,7 @@ export default function OutPostGroups({ groups: initialGroups, outpostId, pagina
                                             const loanChange = group.loan_balance_after - group.loan_balance_b4;
 
                                             return (
-                                                <TableRow  key={group.id} className="group max-w-screen hover:bg-muted/50 border border-primary md:border-0">
+                                                <TableRow key={group.id} className="group max-w-screen hover:bg-muted/50 border border-primary md:border-0">
                                                     <TableCell className="text-xs md:text-sm">
                                                         <div className="flex items-center gap-2">
                                                             <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-primary/10 md:flex">
@@ -538,7 +534,6 @@ export default function OutPostGroups({ groups: initialGroups, outpostId, pagina
                                                                 </Link>
                                                             </Button>
                                                         </div>
-
                                                     </TableCell>
 
                                                     <TableCell className="hidden md:table-cell md:text-sm">
