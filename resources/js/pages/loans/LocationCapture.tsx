@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { PageProps } from '@inertiajs/core';
 import { Link, useForm } from '@inertiajs/react';
-import MainLayout from '../../Layouts/MainLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react';
+import MainLayout from '../Layouts/MainLayout';
 
 interface LoanListing {
   id: number;
