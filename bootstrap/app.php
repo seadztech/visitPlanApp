@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
     })
+     ->withCommands([
+       
+    ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();

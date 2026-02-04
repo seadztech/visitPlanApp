@@ -8,7 +8,8 @@ import {
     Menu,
     X,
     LucideIcon,
-    Building2Icon
+    Building2Icon,
+    ListCheck
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -32,6 +33,11 @@ export default function MainLayout({ title, children }: Props) {
             label: 'Outposts',
             icon: Building2Icon,
             href: route('home'),
+        },
+        {
+            label: 'GFF Loans',
+            icon: ListCheck,
+            href: route('loans.listing.index'),
         },
         {
             label: 'Back',
@@ -66,7 +72,7 @@ export default function MainLayout({ title, children }: Props) {
                         action?.();
                         onClick?.();
                     }}
-                    className={`w-full ${baseClasses}`}
+                    className={`w-[10rem] ${baseClasses}`}
                 >
                     <Icon className={`h-${iconSize} w-${iconSize}`} />
                     {label}
